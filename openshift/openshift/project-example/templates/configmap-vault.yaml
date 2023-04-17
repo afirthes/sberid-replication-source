@@ -1,0 +1,100 @@
+{{- if not .Values.settings.secmanVaultAgentInitDisabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-vault
+  labels:
+    {{- include "default.labels" . | indent 4 }}
+  annotations:
+    deploymentTime: {{ now | date "02.01.2006 15:04:05" }}
+data:
+  config-init.hcl: |
+      "listener" = {
+        "type" = "tcp"
+        "address" = "127.0.0.1:8100"
+        "tls_disable" = true
+        "agent_api" = {
+          "enable_quit" = true
+          }
+      }
+      "cache" = {
+        use_auto_auth_token = true
+      }
+      "auto_auth" = {
+        "method"= {
+          "type" = "kubernetes",
+          "mount_path" = "auth/os/{{ .Values.secman.cluster }}",
+          "config" = {
+            "role" = "{{ .Values.secman.projectAsRole }}"
+          },
+          "namespace" = "{{ .Values.secman.namespace }}"
+        }
+
+        "sink" = {
+          "type" = "file",
+          "config" = {
+            "path" = "/home/vault/.vault-token",
+          }
+        }
+      }
+
+      "exit_after_auth" = true
+      "pid_file" = "/home/vault/.pid"
+
+      vault {
+        address = "http://{{ .Values.secman.url }}"
+      }
+
+{{- if not .Values.settings.sslDisabled }}
+
+{{- if .Values.secman.secretFile }}
+  {{- range .Values.secman.secretFile }}
+
+      template = {
+        source = "/vault/configs/{{ .name }}.ctmpl"
+        destination = "/vault/secrets/{{ .name }}"
+        left_delimiter = "(("
+        right_delimiter = "))"
+      }
+
+  {{- end }}
+{{- end }}
+
+{{- if .Values.secman.secretText }}
+  {{- range .Values.secman.secretText }}
+
+      template = {
+        source = "/vault/configs/{{ .name }}.ctmpl"
+        destination = "/vault/secrets/{{ .name }}"
+        left_delimiter = "(("
+        right_delimiter = "))"
+      }
+
+  {{- end }}
+{{- end }}
+
+{{- if .Values.secman.secretFile }}
+  {{- range .Values.secman.secretFile }}
+
+  {{ .name }}.ctmpl: |
+    ((- with secret "{{ .path }}" -))
+    (( base64Decode (index .Data "{{ .name }}") ))
+    ((- end -))
+
+  {{- end }}
+{{- end }}
+
+{{- if .Values.secman.secretText }}
+  {{- range .Values.secman.secretText }}
+
+  {{ .name }}.ctmpl: |
+    ((- with secret "{{ .path }}" -))
+    (( (index .Data "{{ .name }}") ))
+    ((- end -))
+
+  {{- end }}
+{{- end }}
+
+{{- end }}
+
+{{- end }}

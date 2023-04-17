@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-env
+  labels:
+    {{- include "default.labels" . | indent 4 }}
+  annotations:
+    deploymentTime: {{ now | date "02.01.2006 15:04:05" }}
+data:
+
+  PROJECT_EXAMPLE_SERVICE_NAME: "project-example"
+  PROJECT_EXAMPLE_SERVICE_VERSION: "${project.version}"
+  PROJECT_EXAMPLE_SERVICE_BRANCH: "${git.branch}"
+  PROJECT_EXAMPLE_SERVICE_COMMIT: "${git.commit.id}"
+  PROJECT_EXAMPLE_SERVER_PORT: {{ .Values.env.serverPort | default "8080"  | quote }}
+  PROJECT_EXAMPLE_MANAGEMENT_PORT: {{ .Values.env.managementPort | default "9090"  | quote }}
+  PROJECT_EXAMPLE_APIDOCS_ENABLED: {{ .Values.env.apidocsEnabled | default "false"  | quote }}
+  PROJECT_EXAMPLE_SWAGGER_UI_ENABLED: {{ .Values.env.swaggerUiEnabled | default "false"  | quote }}
+
+{{- if not .Values.settings.secmanVaultAgentInitDisabled }}
+  spring.config.import: "/vault/secrets/application_secrets.yml"
+
+  {{- if not .Values.env.sslDisabled }}
+  PROJECT_EXAMPLE_SSL_ENABLED: "true"
+  PROJECT_EXAMPLE_SSL_KEY_STORE_PATH: "/vault/secrets/keystore.jks"
+  PROJECT_EXAMPLE_NEGOTIATION_TYPE: "TLS"
+  PROJECT_EXAMPLE_SECURITY_CA_BUNDLE_PATH: "file:/vault/secrets/ca-bundle.pem"
+  {{- end }}
+{{- end }}
+

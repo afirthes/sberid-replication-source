@@ -1,0 +1,21 @@
+kubernetesClusterDomain: cluster.local
+
+deployment:
+  replicas: 1
+  limits_cpu: "1"
+  limits_memory: "1Gi"
+  requests_cpu: "1"
+  requests_memory: "1Gi"
+  readiness_probe_initial_delay: 15
+  readiness_probe_failure_threshold: 60
+  readiness_probe_period: 2
+  readiness_probe_success_threshold: 2
+  readiness_probe_timeout: 2
+  liveness_probe_initial_delay: 15
+  liveness_probe_timeout: 2
+  liveness_probe_period: 5
+  liveness_probe_success_threshold: 1
+  liveness_probe_failure_threshold: 5
+
+env:
+  sslDisabled: false

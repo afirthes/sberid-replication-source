@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-files
+  labels:
+    {{- include "default.labels" . | indent 4 }}
+  annotations:
+    deploymentTime: {{ now | date "02.01.2006 15:04:05" }}
+data:
+  fluent-bit.conf: |-
+{{ tpl ( .Files.Get "files/fluent-bit.conf" ) . | indent 4 }}
+  parsers.conf: |-
+{{ tpl ( .Files.Get "files/parsers.conf" ) . | indent 4 }}

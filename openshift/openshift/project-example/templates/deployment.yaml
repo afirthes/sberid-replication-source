@@ -1,0 +1,171 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    {{- include "default.labels" . | indent 4 }}
+    branch: "${git.branch}"
+    commit: "${git.commit.id}"
+  annotations:
+    deploymentTime: {{ now | date "02.01.2006 15:04:05" }}
+spec:
+  progressDeadlineSeconds: 600
+  replicas: {{ .Values.deployment.replicas | default 1 }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 5
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/configmap_files: {{ include (print $.Template.BasePath "/configmap-files.yaml") . | sha256sum }}
+        checksum/configmap_env: {{ include (print $.Template.BasePath "/configmap-env.yaml") . | sha256sum }}
+        checksum/configmap_vault: {{ include (print $.Template.BasePath "/configmap-vault.yaml") . | sha256sum }}
+        prometheus.io_path: /monitor/prometheus
+        prometheus.io_port: "9090"
+        prometheus.io_scheme: https
+        prometheus.io_scrape: "true"
+{{- if not .Values.settings.secmanVaultAgentInitDisabled }}
+        vault.hashicorp.com/agent-configmap: {{ .Chart.Name }}-vault
+        sidecar.istio.io/inject: 'false'
+        vault.hashicorp.com/log-level: debug
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/agent-init-first: 'true'
+        vault.hashicorp.com/agent-pre-populate-only: "true"
+        vault.hashicorp.com/agent-enable-quit: 'true'
+        vault.hashicorp.com/secret-volume-path: '/vault/secrets'
+        vault.hashicorp.com/agent-volumes-default-mode: '0400'
+        vault.hashicorp.com/agent-limits-cpu: 100m
+        vault.hashicorp.com/agent-limits-mem: 128Mi
+        vault.hashicorp.com/agent-requests-cpu: 100m
+        vault.hashicorp.com/agent-requests-mem: 128Mi
+        vault.hashicorp.com/namespace: '{{ .Values.secman.namespace }}'
+        vault.hashicorp.com/role: '{{ .Values.secman.projectAsRole }}'
+{{- end }}
+{{- if not .Values.settings.secmanVaultAgentInitDisabled }}
+        secman-injector: enabled
+{{- end }}
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ .Chart.Name }}
+            topologyKey: kubernetes.io/hostname
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: {{ .Chart.Name }}
+          image: ${docker.registry.url}
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: {{ .Values.deployment.resources.requestsCpu | default "300m" }}
+              memory: {{ .Values.deployment.resources.requestsMemory | default "600Mi" }}
+            limits:
+              cpu: {{ .Values.deployment.resources.limitsCpu | default "300m" }}
+              memory: {{ .Values.deployment.resources.limitsMemory | default "1Gi" }}
+          readinessProbe:
+            httpGet:
+              path: /monitor/healthcheck
+              port: 9090
+              scheme: HTTPS
+            initialDelaySeconds: {{ .Values.deployment.readiness.probe_initial_delay | default 15 }}
+            periodSeconds: {{ .Values.deployment.readiness.probe_period | default 2 }}
+            successThreshold: {{ .Values.deployment.readiness.probe_success_threshold | default 2 }}
+            timeoutSeconds: {{ .Values.deployment.readiness.probe_timeout | default 2 }}
+            failureThreshold: {{ .Values.deployment.readiness.probe_failure_threshold | default 50 }}
+          livenessProbe:
+            httpGet:
+              path: /monitor/healthcheck
+              port: 9090
+              scheme: HTTPS
+            initialDelaySeconds: {{ .Values.deployment.liveness.probe_initial_delay | default 25 }}
+            periodSeconds: {{ .Values.deployment.liveness.probe_period | default 10 }}
+            successThreshold: {{ .Values.deployment.liveness.probe_success_threshold | default 1 }}
+            timeoutSeconds: {{ .Values.deployment.liveness.probe_timeout | default 5 }}
+            failureThreshold: {{ .Values.deployment.liveness.probe_failure_threshold | default 5 }}
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          - containerPort: 9090
+            protocol: TCP
+          terminationMessagePolicy: FallbackToLogsOnError
+          securityContext:
+            readOnlyRootFilesystem: true
+          env:
+            - name:      MODULE_VERSION
+              value:     {{ include "module.version" . | trim }}
+            - name:      SYSTEM_NAME
+              value:     'Cloud'
+            - name:      NAMESPACE
+              value:     {{ .Release.Namespace }}
+            - name:      POD_SOURCE
+              valueFrom: { fieldRef: { apiVersion: v1, fieldPath: metadata.name } }
+            - name:      CONTAINER_NAME
+              value:     {{ .Release.Name }}
+          envFrom:
+           - configMapRef:
+               name: {{ .Chart.Name }}-env
+          volumeMounts:
+           - name: tmp
+             mountPath: /tmp
+{{- if not (eq (.Values.fluentBit).disabled "true") }}
+        - name: fluent-bit
+          image: >-
+            registry.sigma.sbrf.ru/ci02440297/ci02459375_sberidcloud/thirdparty/fluent-bit@sha256:146bc4acc53e60991a7bb10f3049473e98616b5bb25facf49dfb030c62780b0c
+          resources:
+            limits:
+              cpu: {{ (((.Values.fluentBit).deploy).resources).limitsCpu | default "200m" }}
+              memory: {{ (((.Values.fluentBit).deploy).resources).limitsMemory | default "128Mi" }}
+            requests:
+              cpu: {{ (((.Values.fluentBit).deploy).resources).requestsCpu | default "200m" }}
+              memory: {{ (((.Values.fluentBit).deploy).resources).requestsMemory | default "128Mi" }}
+          volumeMounts:
+            - name: fluent-bit-config
+              mountPath: /opt/bitnami/fluent-bit/conf
+            - name: tmp
+              mountPath: /tmp
+          terminationMessagePolicy: FallbackToLogsOnError
+          imagePullPolicy: Always
+          securityContext:
+            readOnlyRootFilesystem: true
+  {{- if not (eq (.Values.fluentBit).disableHealthCheck "true") }}
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 2020
+              scheme: HTTP
+            initialDelaySeconds: {{ (((.Values.fluentBit).deploy).readiness).initialDelaySeconds | default 5 }}
+            timeoutSeconds:      {{ (((.Values.fluentBit).deploy).readiness).timeoutSeconds | default 1 }}
+            periodSeconds:       {{ (((.Values.fluentBit).deploy).readiness).periodSeconds | default 5 }}
+            successThreshold:    {{ (((.Values.fluentBit).deploy).readiness).successThreshold | default 1 }}
+            failureThreshold:    {{ (((.Values.fluentBit).deploy).readiness).failureThreshold | default 6 }}
+  {{- end }}
+{{- end  }}
+      volumes:
+      - name: tmp
+        emptyDir: {}
+{{- if not (eq (.Values.fluentBit).disabled "true") }}
+        - name: fluent-bit-config
+          configMap:
+            name: {{ .Release.Name }}-files
+            defaultMode: 256
+          items:
+            - key:  fluent-bit.conf
+              path: fluent-bit.conf
+            - key:  parsers.conf
+              path: parsers.conf
+{{- end }}
