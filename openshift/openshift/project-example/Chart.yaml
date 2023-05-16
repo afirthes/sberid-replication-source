@@ -1,8 +1,0 @@
-apiVersion: v2
-name: sberid-debezium
-description: 'Debezium service'
-type: application
-version: 1.0.0
-appVersion: 1.0.0
-sources:
-  - https://stash.sigma.sbrf.ru/projects/SBERIDCLOUD/repos/sberid-debezium/browse
