@@ -9,5 +9,7 @@ RUN echo "Europe/Moscow" > /etc/timezone \
     && rpm -ivh /tmp/*.rpm \
     && rm -f /tmp/*.rpm
 
+USER 1001
+
 #ENTRYPOINT ["tail", "-f", "/dev/null"]
 ENTRYPOINT ["connect-distributed", "/etc/kafka/connect-distributed.properties"]
