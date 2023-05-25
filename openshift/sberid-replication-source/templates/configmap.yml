@@ -1,0 +1,12 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    {{- include "default.labels" . | indent 4 }}
+  annotations:
+    deploymentTime: {{ now | date "02.01.2006 15:04:05" }}
+data:
+  nginx.conf: |-
+{{/*{{ tpl (.Files.Get "files/test.conf") . | indent 4 }}*/}}
+

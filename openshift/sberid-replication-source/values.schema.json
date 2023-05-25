@@ -1,0 +1,281 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "required": [
+    "deployment"
+  ],
+  "properties": {
+    "deployment": {
+      "description": "Настройки деплоя",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "imagePath"
+      ],
+      "properties": {
+        "replicas": {
+          "type": "integer",
+          "description": "Количество подов"
+        },
+        "imagePath": {
+          "type": "string"
+        },
+        "rollingUpdateMaxSurge": {
+          "type": "string"
+        },
+        "resources": {
+          "$ref": "#/$defs/resources"
+        },
+        "readinessProbe": {
+          "$ref": "#/$defs/probe"
+        },
+        "livenessProbe": {
+          "$ref": "#/$defs/probe"
+        }
+      }
+    },
+    "secman": {
+      "description": "Параметры инит-контейнера Secman",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["namespace", "role", "cluster", "address", "path"],
+      "properties": {
+        "namespace": {
+          "description": "Пространство в Secman, к которому идёт подключение",
+          "type": "string"
+        },
+        "role": {
+          "description": "Роль в Openshift для соединения с Secman",
+          "type": "string"
+        },
+        "cluster": {
+          "description": "Кластер Openshift, из которого идёт подключение к Secman",
+          "type": "string"
+        },
+        "address": {
+          "description": "URL сервиса egress, который проксирует трафик до SecMan",
+          "type": "string"
+        },
+        "path": {
+          "description": "Внутренний путь в Secman к секретам",
+          "type": "string"
+        },
+        "secretFile": {
+          "description": "Секрет в виде файла закодированного в base64",
+          "type": "array",
+          "additionalProperties": false,
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "description": "Имя файла секрета.",
+                "type": "string"
+              },
+              "secret": {
+                "description": "Имя секрета в Secman.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "secret"
+            ]
+          }
+        },
+        "secretText": {
+          "description": "Секрет в виде текста",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "description": "Имя файла секрета",
+                "type": "string"
+              },
+              "secret": {
+                "description": "Путь к секрету в Secman",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "secret"
+            ]
+          }
+        }
+      }
+    },
+    "fluentBit": {
+      "description": "Настройки fluentBit сайдкара",
+      "type": "object",
+      "properties": {
+        "disabled": {
+          "description": "Признак отключения fluentbit",
+          "type": "string",
+          "enum": [
+            "true",
+            "false"
+          ]
+        },
+        "flush": {
+          "type": "number",
+          "description": "Периодичность отправки логов"
+        },
+        "logLevel": {
+          "description": "Уровень логирования",
+          "type": "string",
+          "enum": [
+            "off",
+            "error",
+            "warn",
+            "info",
+            "debug",
+            "trace"
+          ]
+        },
+        "memBufLimit": {
+          "type": "string",
+          "description": "Максимальное количество памяти для обработки логов"
+        },
+        "bufferMaxSize": {
+          "type": "string",
+          "description": "Максимальный размер буфера"
+        },
+        "rotateWait": {
+          "type": "number",
+          "description": "Дополнительное ожидание дозаписи в файлы логов после их ротации"
+        },
+        "refreshInterval": {
+          "type": "number",
+          "description": "Интервал обновления списка читаемых файлов"
+        },
+        "stdout": {
+          "description": "Вывод логов в stdout",
+          "type": "string",
+          "enum": [
+            "true",
+            "false"
+          ]
+        },
+        "http": {
+          "description": "Параметры отправки логов по http",
+          "type": "object",
+          "required": [
+            "host",
+            "port"
+          ],
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "number"
+            },
+            "uri": {
+              "type": "string"
+            },
+            "workers": {
+              "type": "number"
+            },
+            "tls": {
+              "description": "Настройки ssl соединения",
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "enabled"
+              ],
+              "properties": {
+                "enabled": {
+                  "description": "Включен ли tls",
+                  "type": "string",
+                  "enum": [
+                    "true",
+                    "false"
+                  ]
+                },
+                "debug": {
+                  "description": "Уровень логирования tls. 0 (No debug), 1 (Error), 2 (State change), 3 (Informational) and 4 Verbose",
+                  "type": "number",
+                  "enum": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4
+                  ]
+                },
+                "verify": {
+                  "description": "Включение проверки сертификата",
+                  "type": "string",
+                  "enum": [
+                    "true",
+                    "false"
+                  ]
+                },
+                "caFile": {
+                  "description": "Путь до доверенной цепочки",
+                  "type": "string"
+                },
+                "crtFile": {
+                  "description": "Путь до клиентского сертификата для mTLS",
+                  "type": "string"
+                },
+                "keyFile": {
+                  "description": "Путь до приватного ключа клиентского сертификата для mTLS",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "deployment": {
+          "description": "Параметры деплоя сайдкара",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "resources": {
+              "$ref": "#/$defs/resources"
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "resources": {
+      "description": "Параметры ресурсов для контейнера приложения",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cpu": {
+          "type": "string"
+        },
+        "memory": {
+          "type": "string"
+        }
+      }
+    },
+    "probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "initialDelaySeconds": {
+          "type": "number"
+        },
+        "timeoutSeconds": {
+          "type": "number"
+        },
+        "periodSeconds": {
+          "type": "number"
+        },
+        "successThreshold": {
+          "type": "number"
+        },
+        "failureThreshold": {
+          "type": "number"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+---
+from_commit: 'origin/master'
+credentials:
+  ssh: 'secman_ssh_key_ci'
+  tuz: 'secman_ad_tuz_ci'
+  sonar: 'secman_sonar_token'
+  tuz_nexus3: 'secman_ad_tuz_ci_cab-sa-dvo04052'
+sonar:
+  enabled: false
+nexus:
+  group_id: 'CI02440297.ingress'
+  artifact_id: 'CI03369958'
+registry:
+#  TODO указать ссылку
+  url: ""
+docker:
+  build_enabled: true
+  image_name: 'sberid-replication-source'
+docker_dir: 'docker'
+distrib_path: '*.zip'
+assembly_dirs: [openshift]
+sast: &sast
+  enabled: true
+  config_path: './build_configs/devsecops-config.y*ml'
+oss:
+  <<: *sast
+
+...
