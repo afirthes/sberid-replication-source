@@ -8,8 +8,8 @@ credentials:
 sonar:
   enabled: false
 nexus:
-  group_id: 'CI02440297.ingress'
-  artifact_id: 'CI03369958'
+  group_id: 'CI02440297.sberid_replication_source'
+  artifact_id: 'CI04646163'
 registry:
 #  TODO указать ссылку
   url: ""
