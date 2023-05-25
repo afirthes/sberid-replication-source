@@ -6,7 +6,7 @@ USER root
 COPY /rpm /tmp
 
 RUN echo "Europe/Moscow" > /etc/timezone \
-    && rpm -ivh --nodeps /tmp/*.rpm \
+    && rpm -ivh /tmp/*.rpm \
     && rm -f /tmp/*.rpm
 
 #ENTRYPOINT ["tail", "-f", "/dev/null"]
