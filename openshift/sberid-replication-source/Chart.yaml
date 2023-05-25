@@ -1,0 +1,7 @@
+apiVersion: v2
+name: sberid-replication-source
+description: Источник данных репликации
+version: 1.0.0
+appVersion: "${project.distr.version}"
+sources:
+  - https://stash.sigma.sbrf.ru/projects/SBERIDCLOUD/repos/sberid-replication-source/browse

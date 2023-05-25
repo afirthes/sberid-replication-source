@@ -1,0 +1,142 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    {{- include "default.labels" . | indent 4 }}
+  annotations:
+    deploymentTime: {{ now | date "02.01.2006 15:04:05" }}
+spec:
+  replicas: {{ .Values.deployment.replicas | default 1 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.deployment.rollingUpdateMaxSurge | default "25%" }}
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  paused: false
+  revisionHistoryLimit: 5
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+{{- if .Values.secman }}
+        secman-injector: enabled
+{{- end }}
+      annotations:
+{{/*  TODO разбраться с метриками прометеуса */}}
+{{/*        prometheus.io/scrape_main: "http:9090:/metrics"*/}}
+{{- if not (eq (.Values.fluentBit).disabled "true") }}
+        prometheus.io/scrape_fb: "http:2020:/api/v1/metrics/prometheus"
+{{- end }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yml") . | sha256sum }}
+{{- if not (eq (.Values.fluentBit).disabled "true" )}}
+        checksum/configmap-fluent-bit: {{ include (print $.Template.BasePath "/configmap-fluent-bit.yml") . | sha256sum }}
+{{- end }}
+{{- if .Values.secman }}
+        checksum/configmap-secman: {{ include (print $.Template.BasePath "/configmap-secman.yml") . | sha256sum }}
+{{- include "secman.annotations" . | indent 8 }}
+{{- end }}
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: "app"
+                    operator: In
+                    values:
+                      - "{{ .Release.Name }}"
+              topologyKey: "kubernetes.io/hostname"
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: {{ .Release.Name }}
+          image: {{ .Values.deployment.imagePath | trim }}/{{ include "digest.connector" . | trim }}
+          terminationMessagePolicy: FallbackToLogsOnError
+          imagePullPolicy: Always
+          securityContext:
+            readOnlyRootFilesystem: true
+          resources:
+            requests:
+              cpu: {{ ((.Values.deployment).resources).cpu | default "500m" }}
+              memory: {{ ((.Values.deployment).resources).memory | default "1Gi" }}
+            limits:
+              cpu: {{ ((.Values.deployment).resources).cpu | default "500m" }}
+              memory: {{ ((.Values.deployment).resources).memory | default "1Gi" }}
+          ports:
+            - containerPort: 9090
+              protocol: TCP
+            {{- range $index, $value := .Values.settings }}
+            - containerPort:        {{ add $index 9001 }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: healthcheck
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: {{ (.Values.deployment.readiness).initialDelaySeconds | default 5 }}
+            timeoutSeconds:      {{ (.Values.deployment.readiness).timeoutSeconds | default 1 }}
+            periodSeconds:       {{ (.Values.deployment.readiness).periodSeconds | default 5 }}
+            successThreshold:    {{ (.Values.deployment.readiness).successThreshold | default 1 }}
+            failureThreshold:    {{ (.Values.deployment.readiness).failureThreshold | default 3 }}
+          livenessProbe:
+            httpGet:
+              path: healthcheck
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: {{ (.Values.deployment.liveness).initialDelaySeconds | default 5 }}
+            timeoutSeconds:      {{ (.Values.deployment.liveness).timeoutSeconds | default 1 }}
+            periodSeconds:       {{ (.Values.deployment.liveness).periodSeconds | default 5 }}
+            successThreshold:    {{ (.Values.deployment.liveness).successThreshold | default 1 }}
+            failureThreshold:    {{ (.Values.deployment.liveness).failureThreshold | default 3 }}
+          env:
+            - name:      PROJECT_NAME
+              valueFrom: { fieldRef: { apiVersion: v1, fieldPath: metadata.namespace } }
+            - name:      POD_SOURCE
+              valueFrom: { fieldRef: { apiVersion: v1, fieldPath: metadata.name } }
+            - name:      CONTAINER_NAME
+              value:     {{ .Release.Name }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+{{- if not (eq (.Values.fluentBit).disabled "true") }}
+        - name: fluent-bit
+          env:
+            - name: POD_SOURCE
+              valueFrom: { fieldRef: { apiVersion: v1, fieldPath: metadata.name } }
+            - name: MODULE_VERSION
+              value: {{ include "module.version" . | trim }}
+          image: >-
+            registry.sigma.sbrf.ru/ci02440297/ci02459375_sberidcloud/thirdparty/fluent-bit@sha256:146bc4acc53e60991a7bb10f3049473e98616b5bb25facf49dfb030c62780b0c
+          resources:
+            limits:
+              cpu: {{ (((.Values.fluentBit).deployment).resources).cpu | default "200m" }}
+              memory: {{ (((.Values.fluentBit).deployment).resources).memory | default "128Mi" }}
+            requests:
+              cpu: {{ (((.Values.fluentBit).deployment).resources).cpu | default "200m" }}
+              memory: {{ (((.Values.fluentBit).deployment).resources).memory | default "128Mi" }}
+          volumeMounts:
+            - name: fluent-bit-config
+              mountPath: /opt/bitnami/fluent-bit/conf
+            - name: tmp
+              mountPath: /tmp
+          ports:
+            - containerPort: 2020
+              protocol: TCP
+          terminationMessagePolicy: FallbackToLogsOnError
+          imagePullPolicy: Always
+          securityContext:
+            readOnlyRootFilesystem: true
+{{- end  }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{- if not (eq (.Values.fluentBit).disabled "true") }}
+        - name: fluent-bit-config
+          configMap:
+            name: {{ .Release.Name }}-fluent-bit
+            defaultMode: 256
+{{- end }}

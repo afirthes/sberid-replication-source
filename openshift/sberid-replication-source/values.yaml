@@ -1,0 +1,21 @@
+# стендозависимые параметры для dev-стенда
+deployment:
+  replicas: 1
+#  TODO ссылка на образ
+  imagePath: ""
+  resources:
+      cpu: 300m
+      memory: 512Mi
+  rollingUpdateMaxSurge: "25%"
+
+settings:
+secman:
+  namespace: CI02440297_CI02516656
+  role: ci02440297-etestkh-sberid-cloud-ift-h
+  cluster: test-kh.enablers.sbrf.ru
+  address: https://t.secrets.enablers.sbrf.ru
+#  TODO завести папку в secman и добавить секреты
+  path: 'A/SBERID/OSH/SBERID/KV/ci02440297-etestkh-sberid-cloud-ift-h'
+  secretFile:
+#    - name: ca.pem
+#      secret: ingress-ca
