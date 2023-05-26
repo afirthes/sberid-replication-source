@@ -12,10 +12,9 @@ team:
 ### Общая информация о приложении ###
 app:
   # конфигурационный элемент КЭ приложения / модуля ПО в Service Manager
-  sm_id: "04646163"
+  sm_id: "CI04646163"
   # название КЭ приложения / модуля ПО в Service Manager
-#  TODO название приложения
-  sm_name: ""
+  sm_name: "CI04646163_sberid-replication-source"
 ### Настройки SAST Checkmarx ###
 sast_cx:
   # сredentials id в Jenkins для учетной записи Checkmarx одной команды, под которой будет проводиться сканирование
@@ -23,7 +22,7 @@ sast_cx:
   # проектная область в JIRA для заведения и синхронизации дефектов
   jira_area: "SID"
   # маски файлов и директорий для включения (**/*) в скан и исключения (!**/*) из скана. Пример: "!**/utils/**/*.xml" - исключение всех xml файлов в папке utils
-  masks: "'!init_gradle/**','!openshift/**','!templates/**','!*.html', '!**/*.html', '!build/**', '!skopeo', '!*.csv', '!*.json', '!*.xml', '!tmp/**', '!gradle/**', '!*.crt', '!*intTest/**', '!*test/**', '!*.gradle'"
+  masks: "'!devops/**','!init_gradle/**','!openshift/**','!templates/**','!*.html', '!**/*.html', '!build/**', '!skopeo', '!*.csv', '!*.json', '!*.xml', '!tmp/**', '!gradle/**', '!*.crt', '!*intTest/**', '!*test/**', '!*.gradle'"
   # id профиля сканирования, по умолчанию 36. 14 - для мобильного приложения. 100003 - Smoke
   preset_id: "36"
   # макс время ожидания статуса QG в минутах

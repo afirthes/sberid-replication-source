@@ -6,13 +6,13 @@ credentials:
   sonar: 'secman_sonar_token'
   tuz_nexus3: 'secman_ad_tuz_ci_cab-sa-dvo04052'
 sonar:
-  enabled: false
+  enabled: true
+  project_key: ru.sber.id:sberid-replication-source
 nexus:
-  group_id: 'CI02440297.sberid_replication_source'
+  group_id: 'CI02440297.sberid-replication-source'
   artifact_id: 'CI04646163'
 registry:
-#  TODO указать ссылку
-  url: ""
+  url: docker-dev.registry-ci.delta.sbrf.ru/ci02440297/ci04646163
 docker:
   build_enabled: true
   image_name: 'sberid-replication-source'
