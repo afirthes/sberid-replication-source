@@ -51,3 +51,8 @@ docker run -d --rm \
     -p 35432:35432 \
     pgbouncer
 ```
+
+
+# Натсройка kafka-connect
+Работа с секретами https://docs.confluent.io/platform/current/connect/security.html#externalizing-secrets
+

@@ -67,31 +67,28 @@ spec:
               cpu: {{ ((.Values.deployment).resources).cpu | default "500m" }}
               memory: {{ ((.Values.deployment).resources).memory | default "1Gi" }}
           ports:
-            - containerPort: 9090
+            - containerPort: 8083
               protocol: TCP
-            {{- range $index, $value := .Values.settings }}
-            - containerPort:        {{ add $index 9001 }}
-            {{- end }}
           readinessProbe:
             httpGet:
-              path: healthcheck
-              port: 8080
+              path: connectors
+              port: 8083
               scheme: HTTP
-            initialDelaySeconds: {{ (.Values.deployment.readiness).initialDelaySeconds | default 5 }}
-            timeoutSeconds:      {{ (.Values.deployment.readiness).timeoutSeconds | default 1 }}
-            periodSeconds:       {{ (.Values.deployment.readiness).periodSeconds | default 5 }}
-            successThreshold:    {{ (.Values.deployment.readiness).successThreshold | default 1 }}
-            failureThreshold:    {{ (.Values.deployment.readiness).failureThreshold | default 3 }}
+            initialDelaySeconds: {{ ((.Values.deployment).readiness).initialDelaySeconds | default 15 }}
+            timeoutSeconds:      {{ ((.Values.deployment).readiness).timeoutSeconds | default 2 }}
+            periodSeconds:       {{ ((.Values.deployment).readiness).periodSeconds | default 2 }}
+            successThreshold:    {{ ((.Values.deployment).readiness).successThreshold | default 1 }}
+            failureThreshold:    {{ ((.Values.deployment).readiness).failureThreshold | default 25 }}
           livenessProbe:
             httpGet:
-              path: healthcheck
-              port: 8080
+              path: connectors
+              port: 8083
               scheme: HTTP
-            initialDelaySeconds: {{ (.Values.deployment.liveness).initialDelaySeconds | default 5 }}
-            timeoutSeconds:      {{ (.Values.deployment.liveness).timeoutSeconds | default 1 }}
-            periodSeconds:       {{ (.Values.deployment.liveness).periodSeconds | default 5 }}
-            successThreshold:    {{ (.Values.deployment.liveness).successThreshold | default 1 }}
-            failureThreshold:    {{ (.Values.deployment.liveness).failureThreshold | default 3 }}
+            initialDelaySeconds: {{ ((.Values.deployment).liveness).initialDelaySeconds | default 25 }}
+            timeoutSeconds:      {{ ((.Values.deployment).liveness).timeoutSeconds | default 1 }}
+            periodSeconds:       {{ ((.Values.deployment).liveness).periodSeconds | default 10 }}
+            successThreshold:    {{ ((.Values.deployment).liveness).successThreshold | default 1 }}
+            failureThreshold:    {{ ((.Values.deployment).liveness).failureThreshold | default 5 }}
           env:
             - name:      PROJECT_NAME
               valueFrom: { fieldRef: { apiVersion: v1, fieldPath: metadata.namespace } }

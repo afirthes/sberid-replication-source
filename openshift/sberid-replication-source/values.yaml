@@ -3,9 +3,10 @@ deployment:
   replicas: 1
 #  TODO ссылка на образ
   imagePath: ""
+# https://docs.confluent.io/platform/current/installation/system-requirements.html#on-premises
   resources:
-      cpu: 300m
-      memory: 512Mi
+    cpu: 500m
+    memory: 1Gi
   rollingUpdateMaxSurge: "25%"
 
 settings:
