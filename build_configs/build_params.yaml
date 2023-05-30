@@ -6,7 +6,7 @@ credentials:
   sonar: 'secman_sonar_token'
   tuz_nexus3: 'secman_ad_tuz_ci_cab-sa-dvo04052'
 sonar:
-  enabled: true
+  enabled: false
   project_key: ru.sber.id:sberid-replication-source
 nexus:
   group_id: 'CI02440297.sberid-replication-source'
