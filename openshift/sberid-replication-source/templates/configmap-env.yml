@@ -1,0 +1,15 @@
+{{- if .Values.settings.env }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-env
+  labels:
+    {{- include "default.labels" . | indent 4 }}
+  annotations:
+    deploymentTime: {{ now | date "02.01.2006 15:04:05" }}
+data:
+  {{- range $key,$value := .Values.settings.env }}
+  {{ $key | upper }}: {{ $value | trim | quote }}
+  {{- end }}
+
+{{- end }}

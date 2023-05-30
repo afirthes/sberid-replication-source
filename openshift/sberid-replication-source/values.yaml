@@ -1,8 +1,7 @@
 # стендозависимые параметры для dev-стенда
 deployment:
   replicas: 1
-#  TODO ссылка на образ
-  imagePath: ""
+  imagePath: "docker-dev.registry-ci.delta.sbrf.ru/ci02440297/ci04646163"
 # https://docs.confluent.io/platform/current/installation/system-requirements.html#on-premises
   resources:
     cpu: 500m
@@ -10,6 +9,53 @@ deployment:
   rollingUpdateMaxSurge: "25%"
 
 settings:
+  kafkaConnectDistributedProperties: |
+    bootstrap.servers=kafka:9092
+    group.id=debezium.kafka-connect.consumer
+    key.converter=org.apache.kafka.connect.storage.StringConverter
+    value.converter=org.apache.kafka.connect.json.JsonConverter
+    key.converter.schemas.enable=false
+    value.converter.schemas.enable=false
+    offset.storage.topic=connect-offsets
+    offset.storage.replication.factor=1
+    config.storage.topic=connect-configs
+    config.storage.replication.factor=1
+    status.storage.topic=connect-status
+    status.storage.replication.factor=1
+    offset.flush.interval.ms=10000
+    rest.advertised.host.name=sberid-replication-source
+    plugin.path=/usr/share/java,/usr/share/confluent-hub-components,/data/connect-jars
+    
+    rest.host_name=localhost
+    rest.port=8083
+    rest.advertised.host_name=localhost
+    rest.advertised.port=8083
+    offset.storage.partitions=25
+
+    config.providers=file
+    config.providers.file.class=org.apache.kafka.common.config.provider.FileConfigProvider    
+    
+    security.protocol=SSL
+    ssl.truststore.location=/vault/secrets/truststore.jks
+    ssl.truststore.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_TRUSTSTORE_PASSWORD}
+    ssl.keystore.location=/vault/secrets/keystore.jks
+    ssl.keystore.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_KEYSTORE_PASSWORD}
+    ssl.key.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_KEY_PASSWORD}
+    
+    producer.security.protocol=SSL
+    producer.ssl.truststore.location=/vault/secrets/truststore.jks
+    producer.ssl.truststore.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_TRUSTSTORE_PASSWORD}
+    producer.ssl.keystore.location=/vault/secrets/keystore.jks
+    producer.ssl.keystore.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_KEYSTORE_PASSWORD}
+    producer.ssl.key.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_KEY_PASSWORD}
+    
+    consumer.security.protocol=SSL
+    consumer.ssl.truststore.location=/vault/secrets/truststore.jks
+    consumer.ssl.truststore.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_TRUSTSTORE_PASSWORD}
+    consumer.ssl.keystore.location=/vault/secrets/keystore.jks
+    consumer.ssl.keystore.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_KEYSTORE_PASSWORD}
+    consumer.ssl.key.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_KEY_PASSWORD}
+
 secman:
   namespace: CI02440297_CI02516656
   role: ci02440297-etestkh-sberid-cloud-ift-h
@@ -17,6 +63,12 @@ secman:
   address: https://t.secrets.enablers.sbrf.ru
 #  TODO завести папку в secman и добавить секреты
   path: 'A/SBERID/OSH/SBERID/KV/ci02440297-etestkh-sberid-cloud-ift-h'
+  secretText:
+    - name: kafka_connect_secret.properties
+      secret: kafka_connect_secret.properties
   secretFile:
-#    - name: ca.pem
-#      secret: ingress-ca
+    - name: truststore.jks
+      secret: truststore.jks
+    - name: keystore.jks
+      secret: keystore.jks
+

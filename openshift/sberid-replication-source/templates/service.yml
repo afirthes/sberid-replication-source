@@ -10,7 +10,5 @@ spec:
   selector:
     app: {{ .Release.Name }}
   ports:
-    - name: tcp-8080
-      port: 8080
-    - name: tcp-9000
-      port: 9000
+    - name: tcp-8083
+      port: 8083

@@ -1,6 +1,5 @@
 FROM redhat.registry-ci.delta.sbrf.ru/ubi8/openjdk-11@sha256:5d3a4fbc094c2c29bf7ee0b9715e08d156d8c86a9d56f5e974439077756891f5
 
-#RUN mkdir -p /tmp/confluent-rpm
 USER root
 
 COPY docker/rpm /tmp
@@ -13,5 +12,4 @@ COPY docker/debezium-connector-postgres-1.8.1.Final-plugin.tar.gz /data/connect-
 COPY docker/confluentinc-kafka-connect-jdbc-10.7.0.tar.gz /data/connect-jars
 USER 1001
 
-#ENTRYPOINT ["tail", "-f", "/dev/null"]
 ENTRYPOINT ["connect-distributed", "/etc/kafka/connect-distributed.properties"]

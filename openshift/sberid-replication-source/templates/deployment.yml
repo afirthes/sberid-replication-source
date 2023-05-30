@@ -27,15 +27,10 @@ spec:
         secman-injector: enabled
 {{- end }}
       annotations:
-{{/*  TODO разбраться с метриками прометеуса */}}
-{{/*        prometheus.io/scrape_main: "http:9090:/metrics"*/}}
-{{- if not (eq (.Values.fluentBit).disabled "true") }}
-        prometheus.io/scrape_fb: "http:2020:/api/v1/metrics/prometheus"
+{{- if .Values.settings.env }}
+        checksum/configmap-env: {{ include (print $.Template.BasePath "/configmap-env.yml") . | sha256sum }}
 {{- end }}
-        checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yml") . | sha256sum }}
-{{- if not (eq (.Values.fluentBit).disabled "true" )}}
-        checksum/configmap-fluent-bit: {{ include (print $.Template.BasePath "/configmap-fluent-bit.yml") . | sha256sum }}
-{{- end }}
+        checksum/configmap-files: {{ include (print $.Template.BasePath "/configmap-files.yml") . | sha256sum }}
 {{- if .Values.secman }}
         checksum/configmap-secman: {{ include (print $.Template.BasePath "/configmap-secman.yml") . | sha256sum }}
 {{- include "secman.annotations" . | indent 8 }}
@@ -96,44 +91,34 @@ spec:
               valueFrom: { fieldRef: { apiVersion: v1, fieldPath: metadata.name } }
             - name:      CONTAINER_NAME
               value:     {{ .Release.Name }}
+{{- if .Values.settings.env }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-env
+{{- end }}
           volumeMounts:
+            - name: kafka-connect-config
+              mountPath: /etc/kafka/connect-distributed.properties
+              subPath: connect-distributed.properties
             - name: tmp
               mountPath: /tmp
-{{- if not (eq (.Values.fluentBit).disabled "true") }}
-        - name: fluent-bit
-          env:
-            - name: POD_SOURCE
-              valueFrom: { fieldRef: { apiVersion: v1, fieldPath: metadata.name } }
-            - name: MODULE_VERSION
-              value: {{ include "module.version" . | trim }}
-          image: >-
-            registry.sigma.sbrf.ru/ci02440297/ci02459375_sberidcloud/thirdparty/fluent-bit@sha256:146bc4acc53e60991a7bb10f3049473e98616b5bb25facf49dfb030c62780b0c
-          resources:
-            limits:
-              cpu: {{ (((.Values.fluentBit).deployment).resources).cpu | default "200m" }}
-              memory: {{ (((.Values.fluentBit).deployment).resources).memory | default "128Mi" }}
-            requests:
-              cpu: {{ (((.Values.fluentBit).deployment).resources).cpu | default "200m" }}
-              memory: {{ (((.Values.fluentBit).deployment).resources).memory | default "128Mi" }}
-          volumeMounts:
-            - name: fluent-bit-config
-              mountPath: /opt/bitnami/fluent-bit/conf
-            - name: tmp
-              mountPath: /tmp
-          ports:
-            - containerPort: 2020
-              protocol: TCP
-          terminationMessagePolicy: FallbackToLogsOnError
-          imagePullPolicy: Always
-          securityContext:
-            readOnlyRootFilesystem: true
-{{- end  }}
+{{- if ((.Values.settings).env).CUSTOM_SCRIPT_PATH }}
+          command:
+            - /bin/bash
+            - -c
+            - |
+              /etc/confluent/docker/run &
+              $CUSTOM_SCRIPT_PATH
+              sleep infinity
+{{- end }}
       volumes:
         - name: tmp
           emptyDir: {}
-{{- if not (eq (.Values.fluentBit).disabled "true") }}
-        - name: fluent-bit-config
+        - name: kafka-connect-config
           configMap:
-            name: {{ .Release.Name }}-fluent-bit
+            name: {{ .Release.Name }}-files
             defaultMode: 256
-{{- end }}
+            items:
+              - key: connect-distributed.properties
+                path: connect-distributed.properties
+

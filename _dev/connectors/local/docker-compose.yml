@@ -26,8 +26,8 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
-  kafka-connect:
-    image: kafka-connect
+  sberid-replication-source:
+    image: sberid-replication-source
     restart: unless-stopped
     depends_on:
       - zookeeper
@@ -46,11 +46,9 @@ services:
             docker-kafka-server:
               properties:
                 bootstrap.servers: "kafka:9092"
-              schema-registry:
-                url: "http://schema-registry:8081"
               connect:
-                - name: "kafka-connect"
-                  url: "http://kafka-connect:8083"
+                - name: "sberid-replication-source"
+                  url: "http://sberid-replication-source:8083"
     ports:
       - "28080:8080"
     links:
