@@ -35,36 +35,7 @@ services:
     ports:
       - "28083:8083"
     volumes:
-      - ./connect-distributed.properties:/config/connect-distributed.properties
-      - ./worker.properties:/config/worker.properties
-    environment:
-      EXTRA_ARGS: |
-        -Dbootstrap.servers=kafka:9092 
-        -Drest.host_name=localhost 
-        -Drest.port=8083 
-        -Dest.advertised.host_name=localhost 
-        -Drest.advertised.port=8083 
-        -Doffset.storage.topic=_debezium.connect-offsets 
-        -Doffset.storage.replication.factor=1 
-        -Doffset.storage.partitions=25 
-        -Dconfig.storage.topic=_debezium.connect-configs 
-        -Dconfig.storage.replication.factor=1 
-        -Dstatus.storage.topic=_debezium.connect-status 
-        -Dstatus.storage.replication.factor=1 
-        -Doffset.flush.interval.ms=10000 
-        -Dgroup.id=debezium.kafka-connect.consumer 
-        -Dkey.converter=org.apache.kafka.connect.storage.StringConverter 
-        -Dvalue.converter=org.apache.kafka.connect.json.JsonConverter 
-        -Dkey.converter.schemas.enable=false 
-        -Dvalue.converter.schemas.enable=false 
-        -Doffset.storage.topic=connect-offsets 
-        -Doffset.storage.replication.factor=1 
-        -Dconfig.storage.topic=connect-configs 
-        -Dconfig.storage.replication.factor=1 
-        -Dstatus.storage.topic=connect-status 
-        -Dstatus.storage.replication.factor=1 
-        -Drest.advertised.host.name=kafka-connect 
-        -Dplugin.path=/usr/share/java,/usr/share/confluent-hub-components,/data/connect-jars 
+      - ./connect-distributed.properties:/etc/kafka/connect-distributed.properties
 
   akhq:
     image: tchiotludo/akhq
