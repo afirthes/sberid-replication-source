@@ -8,8 +8,8 @@ RUN echo "Europe/Moscow" > /etc/timezone \
     && rpm -ivh /tmp/*.rpm \
     && rm -f /tmp/*.rpm
 
-COPY docker/debezium-connector-postgres-1.8.1.Final-plugin.tar.gz /data/connect-jars
-COPY docker/confluentinc-kafka-connect-jdbc-10.7.0.tar.gz /data/connect-jars
+ADD docker/debezium-connector-postgres-1.8.1.Final-plugin.tar.gz /usr/share/java/kafka/
+ADD docker/confluentinc-kafka-connect-jdbc-10.7.0.tar.gz /usr/share/java/kafka/
 USER 1001
 
 ENTRYPOINT ["connect-distributed", "/etc/kafka/connect-distributed.properties"]

@@ -1,8 +1,8 @@
 # SberID Replication Source
 
-Собрать образ kafka-connect с source и sink библиотеками из директории ./_dev/docker/kafka-connect
+Собрать образ kafka-connect (sberid-replication-source) с source и sink библиотеками из корневой директории
 ```
-docker build -t kafka-connect .
+docker build --tag sberid-replication-source --file docker/Dockerfile .
 ```
 Запустить ./_dev/connectors/local/docker-compose.yml
 
