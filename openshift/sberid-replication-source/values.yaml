@@ -60,16 +60,16 @@ secman:
   namespace: CI02440297_CI02516656
   role: ci02440297-etestkh-sberid-cloud-ift-h
   cluster: test-kh.enablers.sbrf.ru
-  address: https://t.secrets.enablers.sbrf.ru
+  address: http://egress-secman
 #  TODO завести папку в secman и добавить секреты
   path: 'A/SBERID/OSH/SBERID/KV/ci02440297-etestkh-sberid-cloud-ift-h'
   secretText:
     - name: kafka_connect_secret.properties
       secret: sberid-replication-source
-    - name: ca.crt
-      secret: sberid-replication-source
   secretFile:
     - name: truststore.jks
       secret: sberid-replication-source
     - name: keystore.jks
+      secret: sberid-replication-source
+    - name: ca.crt
       secret: sberid-replication-source
