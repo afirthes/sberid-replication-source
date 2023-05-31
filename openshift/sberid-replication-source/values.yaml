@@ -37,24 +37,24 @@ settings:
     
     security.protocol=SSL
     ssl.truststore.location=/vault/secrets/truststore.jks
-    ssl.truststore.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_TRUSTSTORE_PASSWORD}
+    ssl.truststore.password=${file:/vault/secrets/connect-secret.properties:SSL_TRUSTSTORE_PASSWORD}
     ssl.keystore.location=/vault/secrets/keystore.jks
-    ssl.keystore.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_KEYSTORE_PASSWORD}
-    ssl.key.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_KEY_PASSWORD}
+    ssl.keystore.password=${file:/vault/secrets/connect-secret.properties:SSL_KEYSTORE_PASSWORD}
+    ssl.key.password=${file:/vault/secrets/connect-secret.properties:SSL_KEY_PASSWORD}
     
     producer.security.protocol=SSL
     producer.ssl.truststore.location=/vault/secrets/truststore.jks
-    producer.ssl.truststore.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_TRUSTSTORE_PASSWORD}
+    producer.ssl.truststore.password=${file:/vault/secrets/connect-secret.properties:SSL_TRUSTSTORE_PASSWORD}
     producer.ssl.keystore.location=/vault/secrets/keystore.jks
-    producer.ssl.keystore.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_KEYSTORE_PASSWORD}
-    producer.ssl.key.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_KEY_PASSWORD}
+    producer.ssl.keystore.password=${file:/vault/secrets/connect-secret.properties:SSL_KEYSTORE_PASSWORD}
+    producer.ssl.key.password=${file:/vault/secrets/connect-secret.properties:SSL_KEY_PASSWORD}
     
     consumer.security.protocol=SSL
     consumer.ssl.truststore.location=/vault/secrets/truststore.jks
-    consumer.ssl.truststore.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_TRUSTSTORE_PASSWORD}
+    consumer.ssl.truststore.password=${file:/vault/secrets/connect-secret.properties:SSL_TRUSTSTORE_PASSWORD}
     consumer.ssl.keystore.location=/vault/secrets/keystore.jks
-    consumer.ssl.keystore.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_KEYSTORE_PASSWORD}
-    consumer.ssl.key.password=${file:/vault/secrets/kafka_connect_secret.properties:SSL_KEY_PASSWORD}
+    consumer.ssl.keystore.password=${file:/vault/secrets/connect-secret.properties:SSL_KEYSTORE_PASSWORD}
+    consumer.ssl.key.password=${file:/vault/secrets/connect-secret.properties:SSL_KEY_PASSWORD}
 
 secman:
   namespace: CI02440297_CI02516656
@@ -65,10 +65,10 @@ secman:
   path: 'A/SBERID/OSH/SBERID/KV/ci02440297-etestkh-sberid-cloud-ift-h'
   secretText:
     - name: kafka_connect_secret.properties
-      secret: kafka_connect_secret.properties
+      secret: sberid-replication-source
   secretFile:
     - name: truststore.jks
-      secret: truststore.jks
+      secret: sberid-replication-source
     - name: keystore.jks
-      secret: keystore.jks
+      secret: sberid-replication-source
 
