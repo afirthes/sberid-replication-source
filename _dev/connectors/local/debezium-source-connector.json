@@ -7,6 +7,7 @@
   "database.password": "${file:/vault/secrets/connect-secret.properties:DATABASE_PASSWORD}",
   "database.server.id": "100001",
   "database.server.name": "localhost",
+  "database.sslrootcert": "${file:/vault/secrets/ca.crt}",
   "database.dbname": "idp",
   "table.include.list": "public.customers",
   "publication.name": "debezium_publication",
