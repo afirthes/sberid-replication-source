@@ -36,7 +36,7 @@ services:
       - "28083:8083"
     volumes:
       - ./connect-distributed.properties:/etc/kafka/connect-distributed.properties
-      - ./secrets/connect-secrets.properties:/vault/secrets/connect-secret.properties
+      - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
 
   akhq:
     image: tchiotludo/akhq

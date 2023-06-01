@@ -1,3 +1,4 @@
 .idea/
 _dev/tmp/
 
+/_dev/connectors/local/postgres-data/

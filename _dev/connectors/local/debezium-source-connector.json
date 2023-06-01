@@ -6,7 +6,7 @@
   "database.user": "idp",
   "database.password": "${file:/vault/secrets/connect-secret.properties:DATABASE_PASSWORD}",
   "database.server.id": "100001",
-  "database.server.name": "localhost",
+  "database.server.name": "idpdb",
   "database.sslrootcert": "${file:/vault/secrets/ca.crt}",
   "database.dbname": "idp",
   "table.include.list": "public.customers",
@@ -15,10 +15,14 @@
   "plugin.name": "pgoutput",
   "slot.name": "debezium",
   "snapshot.mode": "initial",
-  "heartbeat.interval.ms": "1000",
   "decimal.handling.mode": "precise",
   "time.precision.mode": "connect",
   "key.converter":"org.apache.kafka.connect.storage.StringConverter",
   "value.converter":"org.apache.kafka.connect.json.JsonConverter",
-  "provide.transaction.metadata": "true"
+  "provide.transaction.metadata": "true",
+
+  "transforms":"removeSchema",
+  "transforms.removeSchema.type":"io.debezium.transforms.ByLogicalTableRouter",
+  "transforms.removeSchema.topic.regex":"(.*)[.](.*)[.](.*)",
+  "transforms.removeSchema.topic.replacement":"$1.$3"
 }
