@@ -1,1 +1,1 @@
-### SberId Replication Service Source ``.
+### SberId Replication Service Sink ``.

@@ -27,7 +27,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   sberid-replication-source:
-    image: sberid-replication-source
+    image: kafka-connect-source
     restart: unless-stopped
     depends_on:
       - zookeeper
@@ -35,10 +35,22 @@ services:
     ports:
       - "28083:8083"
     volumes:
-      - ./connect-distributed.properties:/etc/kafka/connect-distributed.properties
+      - ./connect-distributed-source.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
 
-  akhq:
+  sberid-replication-sink:
+    image: kafka-connect-sink
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+      - kafka
+    ports:
+      - "28084:8083"
+    volumes:
+      - ./connect-distributed-sink.properties:/etc/kafka/connect-distributed.properties
+      - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
+
+  akhq-source:
     image: tchiotludo/akhq
     environment:
       AKHQ_CONFIGURATION: |
@@ -55,10 +67,27 @@ services:
     links:
       - kafka
 
-  postgres:
+  akhq-sink:
+    image: tchiotludo/akhq
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            docker-kafka-server:
+              properties:
+                bootstrap.servers: "kafka:9092"
+              connect:
+                - name: "sberid-replication-sink"
+                  url: "http://sberid-replication-sink:8083"
+    ports:
+      - "28081:8080"
+    links:
+      - kafka
+
+  postgres-source:
     image: debezium/postgres:13
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - ./postgres-data-source:/var/lib/postgresql/data
       - ./scripts/customers.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       - POSTGRES_USER=idp
@@ -68,3 +97,17 @@ services:
       - PGDATA=/var/lib/postgresql/data
     ports:
       - 5432:5432
+
+  postgres-sink:
+    image: debezium/postgres:13
+    volumes:
+      - ./postgres-data-sink:/var/lib/postgresql/data
+      - ./scripts/customers2.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - POSTGRES_USER=idp
+      - POSTGRES_PASSWORD=idp
+      - POSTGRES_DB=idp
+      - PGPASSWORD=idp
+      - PGDATA=/var/lib/postgresql/data
+    ports:
+      - 5433:5432

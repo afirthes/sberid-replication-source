@@ -1,4 +1,5 @@
 .idea/
 _dev/tmp/
 
-/_dev/connectors/local/postgres-data/
+/_dev/connectors/local/postgres-data-sink/
+/_dev/connectors/local/postgres-data-source/
