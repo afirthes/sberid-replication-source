@@ -20,9 +20,9 @@
   "key.converter":"org.apache.kafka.connect.storage.StringConverter",
   "value.converter":"org.apache.kafka.connect.json.JsonConverter",
   "provide.transaction.metadata": "true",
-
+  "topic.transaction": "idp.primary.transaction",
   "transforms":"removeSchema",
   "transforms.removeSchema.type":"io.debezium.transforms.ByLogicalTableRouter",
   "transforms.removeSchema.topic.regex":"(.*)[.](.*)[.](.*)",
-  "transforms.removeSchema.topic.replacement":"$1.$3"
+  "transforms.removeSchema.topic.replacement":"idp.primary.$3"
 }
