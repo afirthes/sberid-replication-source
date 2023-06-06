@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    {{- include "default.labels" . | indent 4 }}
+  annotations:
+    deploymentTime: {{ now | date "02.01.2006 15:04:05" }}
+spec:
+  replicas: {{ .Values.deployment.replicas | default 1 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.deployment.rollingUpdateMaxSurge | default "25%" }}
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  paused: false
+  revisionHistoryLimit: 5
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+{{- if .Values.secman }}
+        secman-injector: enabled
+{{- end }}
+      annotations:
+{{- if .Values.settings.env }}
+        checksum/configmap-env: {{ include (print $.Template.BasePath "/configmap-env.yml") . | sha256sum }}
+{{- end }}
+        checksum/configmap-files: {{ include (print $.Template.BasePath "/configmap-files.yml") . | sha256sum }}
+{{- if .Values.secman }}
+        checksum/configmap-secman: {{ include (print $.Template.BasePath "/configmap-secman.yml") . | sha256sum }}
+{{- include "secman.annotations" . | indent 8 }}
+{{- end }}
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: "app"
+                    operator: In
+                    values:
+                      - "{{ .Release.Name }}"
+              topologyKey: "kubernetes.io/hostname"
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: {{ .Release.Name }}
+          image: {{ .Values.deployment.imagePath | trim }}/{{ include "digest.connector" . | trim }}
+          terminationMessagePolicy: FallbackToLogsOnError
+          imagePullPolicy: Always
+          securityContext:
+            readOnlyRootFilesystem: true
+          resources:
+            requests:
+              cpu: {{ ((.Values.deployment).resources).cpu | default "500m" }}
+              memory: {{ ((.Values.deployment).resources).memory | default "1Gi" }}
+            limits:
+              cpu: {{ ((.Values.deployment).resources).cpu | default "500m" }}
+              memory: {{ ((.Values.deployment).resources).memory | default "1Gi" }}
+          ports:
+            - containerPort: 8083
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: connectors
+              port: 8083
+              scheme: HTTP
+            initialDelaySeconds: {{ ((.Values.deployment).readiness).initialDelaySeconds | default 15 }}
+            timeoutSeconds:      {{ ((.Values.deployment).readiness).timeoutSeconds | default 2 }}
+            periodSeconds:       {{ ((.Values.deployment).readiness).periodSeconds | default 2 }}
+            successThreshold:    {{ ((.Values.deployment).readiness).successThreshold | default 1 }}
+            failureThreshold:    {{ ((.Values.deployment).readiness).failureThreshold | default 25 }}
+          livenessProbe:
+            httpGet:
+              path: connectors
+              port: 8083
+              scheme: HTTP
+            initialDelaySeconds: {{ ((.Values.deployment).liveness).initialDelaySeconds | default 25 }}
+            timeoutSeconds:      {{ ((.Values.deployment).liveness).timeoutSeconds | default 1 }}
+            periodSeconds:       {{ ((.Values.deployment).liveness).periodSeconds | default 10 }}
+            successThreshold:    {{ ((.Values.deployment).liveness).successThreshold | default 1 }}
+            failureThreshold:    {{ ((.Values.deployment).liveness).failureThreshold | default 5 }}
+          env:
+            - name:      PROJECT_NAME
+              valueFrom: { fieldRef: { apiVersion: v1, fieldPath: metadata.namespace } }
+            - name:      POD_SOURCE
+              valueFrom: { fieldRef: { apiVersion: v1, fieldPath: metadata.name } }
+            - name:      CONTAINER_NAME
+              value:     {{ .Release.Name }}
+{{- if .Values.settings.env }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-env
+{{- end }}
+          volumeMounts:
+            - name: kafka-connect-config
+              mountPath: /etc/kafka/connect-distributed.properties
+              subPath: connect-distributed.properties
+            - name: tmp
+              mountPath: /tmp
+{{- if ((.Values.settings).env).CUSTOM_SCRIPT_PATH }}
+          command:
+            - /bin/bash
+            - -c
+            - |
+              /etc/confluent/docker/run &
+              $CUSTOM_SCRIPT_PATH
+              sleep infinity
+{{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: kafka-connect-config
+          configMap:
+            name: {{ .Release.Name }}-files
+            defaultMode: 256
+            items:
+              - key: connect-distributed.properties
+                path: connect-distributed.properties
+

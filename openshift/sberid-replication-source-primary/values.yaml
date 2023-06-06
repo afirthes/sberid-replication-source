@@ -1,0 +1,58 @@
+# стендозависимые параметры для dev-стенда
+deployment:
+  replicas: 1
+  imagePath: "registry.sigma.sbrf.ru/ci02440297/ci04646163"
+# https://docs.confluent.io/platform/current/installation/system-requirements.html#on-premises
+  resources:
+    cpu: 500m
+    memory: 1Gi
+  rollingUpdateMaxSurge: "25%"
+
+settings:
+  kafkaConnectDistributedProperties: |
+    bootstrap.servers=tdleq-mprb00007.enablers.sbrf.ru:9093
+    group.id=sberid.replication.source.primary
+    key.converter=org.apache.kafka.connect.storage.StringConverter
+    value.converter=org.apache.kafka.connect.json.JsonConverter
+    key.converter.schemas.enable=false
+    value.converter.schemas.enable=false
+    
+    offset.storage.topic=source.primary.connect-offsets
+    config.storage.topic=source.primary.connect-configs
+    status.storage.topic=source.primary.connect-status
+
+    topic.creation.enable=false
+    offset.flush.interval.ms=10000
+    plugin.path=/usr/share/java,/usr/share/confluent-hub-components,/data/connect-jars
+    
+    rest.host_name=sberid-replication-source-primary
+    rest.port=8083
+    rest.advertised.host_name=sberid-replication-source-primary
+    rest.advertised.port=8083
+
+    config.providers=file
+    config.providers.file.class=org.apache.kafka.common.config.provider.FileConfigProvider
+    
+    security.protocol=SSL
+    ssl.truststore.location=/vault/secrets/truststore.jks
+    ssl.truststore.password=${file:/vault/secrets/connect-secret.properties:SSL_TRUSTSTORE_PASSWORD}
+    ssl.keystore.location=/vault/secrets/keystore.jks
+    ssl.keystore.password=${file:/vault/secrets/connect-secret.properties:SSL_KEYSTORE_PASSWORD}
+    ssl.endpoint.identification.algorithm=
+
+secman:
+  namespace: CI02440297_CI02516656
+  role: ci02440297-etestkh-sberid-cloud-ift-h
+  cluster: test-kh.enablers.sbrf.ru
+  address: http://egress-secman
+  path: '/A/SBERID/OSH/SBERID/KV/cloud'
+  secretText:
+    - name: connect-secret.properties
+      secret: sberid-replication-source-primary
+  secretFile:
+    - name: truststore.jks
+      secret: sberid-replication-source-primary
+    - name: keystore.jks
+      secret: sberid-replication-source-primary
+    - name: ca.crt
+      secret: sberid-replication-source-primary

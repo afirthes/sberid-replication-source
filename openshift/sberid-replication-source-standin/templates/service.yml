@@ -1,0 +1,14 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name:        {{ .Release.Name }}
+  labels:
+    {{- include "default.labels" . | indent 4 }}
+  annotations:
+    deploymentTime: {{ now | date "02.01.2006 15:04:05" }}
+spec:
+  selector:
+    app: {{ .Release.Name }}
+  ports:
+    - name: tcp-8083
+      port: 8083
