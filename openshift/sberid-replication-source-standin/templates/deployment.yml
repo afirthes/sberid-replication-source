@@ -100,6 +100,15 @@ spec:
             - name: kafka-connect-config
               mountPath: /etc/kafka/connect-distributed.properties
               subPath: connect-distributed.properties
+            - name: create-connectors
+              mountPath: /connectors/create-connectors.sh
+              subPath: create-connectors.sh
+            - name: debezium-source-connector
+              mountPath: /connectors/debezium-source-connector.json
+              subPath: debezium-source-connector.json
+            - name: users-sink-connector
+              mountPath: /connectors/users-sink-connector.json
+              subPath: users-sink-connector.json
             - name: tmp
               mountPath: /tmp
 {{- if ((.Values.settings).env).CUSTOM_SCRIPT_PATH }}
@@ -121,4 +130,24 @@ spec:
             items:
               - key: connect-distributed.properties
                 path: connect-distributed.properties
-
+        - name: create-connectors
+          configMap:
+            name: {{ .Release.Name }}-files
+            defaultMode: 256
+            items:
+              - key: create-connectors.sh
+                path: create-connectors.sh
+        - name: debezium-source-connector
+          configMap:
+            name: {{ .Release.Name }}-files
+            defaultMode: 256
+            items:
+              - key: debezium-source-connector.json
+                path: debezium-source-connector.json
+        - name: users-sink-connector
+          configMap:
+            name: {{ .Release.Name }}-files
+            defaultMode: 256
+            items:
+              - key: users-sink-connector.json
+                path: users-sink-connector.json

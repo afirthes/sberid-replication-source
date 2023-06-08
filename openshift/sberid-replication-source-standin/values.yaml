@@ -9,6 +9,8 @@ deployment:
   rollingUpdateMaxSurge: "25%"
 
 settings:
+  env:
+    CUSTOM_SCRIPT_PATH: "/connectors/create-connectors.sh"
   kafkaConnectDistributedProperties: |
     bootstrap.servers=kafka:9092
     group.id=debezium.kafka-connect.consumer
@@ -36,6 +38,40 @@ settings:
     ssl.truststore.password=${file:/vault/secrets/connect-secret.properties:SSL_TRUSTSTORE_PASSWORD}
     ssl.keystore.location=/vault/secrets/keystore.jks
     ssl.keystore.password=${file:/vault/secrets/connect-secret.properties:SSL_KEYSTORE_PASSWORD}
+  usersSinkConnector: |
+    {
+      "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+      "tasks.max": "1",
+      "plugin.name": "pgoutput",
+      "database.hostname": "tdled-mprb00020.enablers.sbrf.ru",
+      "database.port": "5433",
+      "database.user": "replicator",
+      "database.password": "${file:/vault/secrets/connect-secret.properties:DATABASE_PASSWORD}",
+      "database.dbname": "idpdb",
+      "database.server.name": "idpdb",
+      "schema.include.list": "idp",
+      "table.include.list": "idp.users",
+      "time.precision.mode": "connect",
+      "decimal.handling.mode": "precise",
+      "tombstones.on.delete": false,
+      "publication.autocreate.mode": "filtered",
+      "snapshot.mode": "initial",
+      "snapshot.lock.timeout.ms": 10000,
+      "max.queue.size": 20240,
+      "max.batch.size": 10240,
+      "poll.interval.ms": 1000,
+      "snapshot.fetch.size": 10240,
+      "provide.transaction.metadata": true,
+      "transaction.topic": "idpdb.primary.transaction",
+      "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+      "key.converter.schemas.enable": "true",
+      "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+      "value.converter.schemas.enable": "true",
+      "transforms": "reroute",
+      "transforms.reroute.type": "io.debezium.transforms.ByLogicalTableRouter",
+      "transforms.reroute.topic.regex": "(.*)[.](.*)[.](.*)",
+      "transforms.reroute.topic.replacement": "idpdb.primary.$3"
+    }
 
 secman:
   namespace: CI02440297_CI02516656

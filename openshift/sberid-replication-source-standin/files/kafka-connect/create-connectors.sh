@@ -1,4 +1,6 @@
-## A script similar to this can be used to create connectors making sure the endpoints are ready
+#!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
 
 echo "Waiting for Kafka Connect to start listening on kafka-connect  "
 while :; do
@@ -13,19 +15,18 @@ while :; do
 done
 
 echo "======> Creating connectors"
-# Send a simple POST request to create the connector
-curl -X POST \
-    -H "Content-Type: application/json" \
-    --data '{
-    "name": "sample-connector",
-    "config": {
-        "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
-        "tasks.max": 1,
-        "connection.url": "jdbc:mysql://123.4.5.67:3306/test_db?user=root&password=pass",
-        "mode": "incrementing",
-        "incrementing.column.name": "id",
-        "timestamp.column.name": "modified",
-        "topic.prefix": "sample-connector-",
-        "poll.interval.ms": 1000
-        }
-    }' http://$CONNECT_REST_ADVERTISED_HOST_NAME:8083/connectors
+printf "deploy connectors"
+for filename in *.json; do
+  [ -e "$filename" ] || continue
+
+  printf "\ndeploy connector from file %s\n" "$filename"
+  connector_name="${filename/.json/}"
+  curl -X DELETE \
+    http://localhost:{{ .Values.servicePort }}/connectors/"$connector_name"
+  curl -X PUT \
+    -H 'Content-Type: application/json' \
+    --data-binary "@$filename" \
+    http://localhost:{{ .Values.servicePort }}/connectors/"$connector_name"/config
+  printf "\nconnector has been deployed"
+done
+printf "\nconnectors deployment has been done"
