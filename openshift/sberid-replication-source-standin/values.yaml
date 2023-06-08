@@ -51,6 +51,7 @@ settings:
       "database.server.name": "idpdb",
       "schema.include.list": "idp",
       "table.include.list": "idp.users",
+      "table.name.format": "${topic}",
       "time.precision.mode": "connect",
       "decimal.handling.mode": "precise",
       "tombstones.on.delete": false,

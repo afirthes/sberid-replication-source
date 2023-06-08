@@ -49,7 +49,7 @@ settings:
         "connection.user": "idpapp",
         "connection.password": "${file:/vault/secrets/connect-secret.properties:DATABASE_PASSWORD}",
         "topics": "idpdb.primary.users",
-        "table.name.format": "users",
+        "table.name.format": "${topic}",
         "dialect.name": "PostgreSqlDatabaseDialect",
         "pk.fields": "sber_profile_id",
         "pk.mode": "record_key",
