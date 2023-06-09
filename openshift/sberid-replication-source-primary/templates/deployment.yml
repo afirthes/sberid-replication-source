@@ -105,7 +105,7 @@ spec:
               subPath: debezium-source-connector.json
             - name: tmp
               mountPath: /tmp
-{{- if ((.Values.settings).env).RUN_ADD_CONNECTORS_SCRIPT }}
+{{- if not (eq ((.Values.settings).env).DISABLE_ADD_CONNECTORS_SCRIPT "true") }}
           command:
             - /bin/bash
             - -c

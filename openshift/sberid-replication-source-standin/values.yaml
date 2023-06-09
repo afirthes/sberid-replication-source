@@ -10,7 +10,7 @@ deployment:
 
 settings:
   env:
-    RUN_ADD_CONNECTORS_SCRIPT: true
+    DISABLE_ADD_CONNECTORS_SCRIPT: "false"
   kafkaConnectDistributedProperties: |
     bootstrap.servers=kafka:9092
     group.id=debezium.kafka-connect.consumer

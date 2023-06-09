@@ -9,4 +9,5 @@ metadata:
 data:
   connect-distributed.properties: |-
 {{ tpl ( .Files.Get "files/kafka-connect/connect-distributed.properties" ) . | indent 4 }}
-{{ tpl ( .Files.Get "files/kafka-connect/debezium-source-connector.json" ) . | indent 4 }}
+  debezium-source-connector.json: |-
+{{ tpl ( .Files.Get "files/kafka-connect/idp-source-primary-connector.json" ) . | indent 4 }}
