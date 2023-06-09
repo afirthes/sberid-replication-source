@@ -24,7 +24,39 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+
+  kafka2:
+    image: confluentinc/cp-kafka:7.0.1
+    hostname: kafka2
+    container_name: kafka2
+    depends_on:
+      - zookeeper
+    ports:
+      - "29093:9092"
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9092,PLAINTEXT_HOST://localhost:29093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+
+  kafka3:
+    image: confluentinc/cp-kafka:7.0.1
+    hostname: kafka3
+    container_name: kafka3
+    depends_on:
+      - zookeeper
+    ports:
+      - "29094:9092"
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:9092,PLAINTEXT_HOST://localhost:29094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
 
   sberid-replication-source:
     image: kafka-connect-source
@@ -50,7 +82,7 @@ services:
       - ./connect-distributed-sink.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
 
-  akhq-source:
+  akhq:
     image: tchiotludo/akhq
     environment:
       AKHQ_CONFIGURATION: |
@@ -62,29 +94,14 @@ services:
               connect:
                 - name: "sberid-replication-source"
                   url: "http://sberid-replication-source:8083"
+                - name: "sberid-replication-sink"
+                  url: "http://sberid-replication-sink:8083"
     ports:
       - "28080:8080"
     links:
       - kafka
 
-  akhq-sink:
-    image: tchiotludo/akhq
-    environment:
-      AKHQ_CONFIGURATION: |
-        akhq:
-          connections:
-            docker-kafka-server:
-              properties:
-                bootstrap.servers: "kafka:9092"
-              connect:
-                - name: "sberid-replication-sink"
-                  url: "http://sberid-replication-sink:8083"
-    ports:
-      - "28081:8080"
-    links:
-      - kafka
-
-  postgres-source:
+  postgres:
     image: debezium/postgres:13
     volumes:
       - ./postgres-data-source:/var/lib/postgresql/data
@@ -97,17 +114,3 @@ services:
       - PGDATA=/var/lib/postgresql/data
     ports:
       - 5432:5432
-
-  postgres-sink:
-    image: debezium/postgres:13
-    volumes:
-      - ./postgres-data-sink:/var/lib/postgresql/data
-      - ./scripts/customers2.sql:/docker-entrypoint-initdb.d/init.sql
-    environment:
-      - POSTGRES_USER=idp
-      - POSTGRES_PASSWORD=idp
-      - POSTGRES_DB=idp
-      - PGPASSWORD=idp
-      - PGDATA=/var/lib/postgresql/data
-    ports:
-      - 5433:5432

@@ -56,3 +56,6 @@ kafka-topics --create \
 --replication-factor 1 \
 --partitions 1 \
 
+# connect-status
+docker compose exec kafka \
+kafka-topics --describe --zookeeper localhost:2181 --topic connect-offsets
