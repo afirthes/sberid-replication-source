@@ -103,18 +103,15 @@ spec:
             - name: debezium-source-connector
               mountPath: /connectors/debezium-source-connector.json
               subPath: debezium-source-connector.json
-            - name: jdbc-sink-connector
-              mountPath: /connectors/jdbc-sink-connector.json
-              subPath: jdbc-sink-connector.json
             - name: tmp
               mountPath: /tmp
-{{- if ((.Values.settings).env).CUSTOM_SCRIPT_PATH }}
+{{- if ((.Values.settings).env).RUN_ADD_CONNECTORS_SCRIPT }}
           command:
             - /bin/bash
             - -c
             - |
               /etc/confluent/docker/run &
-              $CUSTOM_SCRIPT_PATH
+              /connectors/create-connectors.sh
               sleep infinity
 {{- end }}
       volumes:
@@ -141,10 +138,3 @@ spec:
             items:
               - key: debezium-source-connector.json
                 path: debezium-source-connector.json
-        - name: jdbc-sink-connector
-          configMap:
-            name: {{ .Release.Name }}-files
-            defaultMode: 256
-            items:
-              - key: jdbc-sink-connector.json
-                path: jdbc-sink-connector.json

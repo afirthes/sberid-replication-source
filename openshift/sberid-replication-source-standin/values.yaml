@@ -10,7 +10,7 @@ deployment:
 
 settings:
   env:
-    CUSTOM_SCRIPT_PATH: "/connectors/create-connectors.sh"
+    RUN_ADD_CONNECTORS_SCRIPT: true
   kafkaConnectDistributedProperties: |
     bootstrap.servers=kafka:9092
     group.id=debezium.kafka-connect.consumer
@@ -38,40 +38,32 @@ settings:
     ssl.truststore.password=${file:/vault/secrets/connect-secret.properties:SSL_TRUSTSTORE_PASSWORD}
     ssl.keystore.location=/vault/secrets/keystore.jks
     ssl.keystore.password=${file:/vault/secrets/connect-secret.properties:SSL_KEYSTORE_PASSWORD}
-  usersSinkConnector: |
+  debeziumSourceConnector: |
     {
-      "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
-      "tasks.max": "1",
-      "plugin.name": "pgoutput",
-      "database.hostname": "tdled-mprb00020.enablers.sbrf.ru",
-      "database.port": "5433",
-      "database.user": "replicator",
-      "database.password": "${file:/vault/secrets/connect-secret.properties:DATABASE_PASSWORD}",
-      "database.dbname": "idpdb",
-      "database.server.name": "idpdb",
-      "schema.include.list": "idp",
-      "table.include.list": "idp.users",
-      "table.name.format": "${topic}",
-      "time.precision.mode": "connect",
-      "decimal.handling.mode": "precise",
-      "tombstones.on.delete": false,
-      "publication.autocreate.mode": "filtered",
-      "snapshot.mode": "initial",
-      "snapshot.lock.timeout.ms": 10000,
-      "max.queue.size": 20240,
-      "max.batch.size": 10240,
-      "poll.interval.ms": 1000,
-      "snapshot.fetch.size": 10240,
-      "provide.transaction.metadata": true,
-      "transaction.topic": "idpdb.primary.transaction",
-      "key.converter": "org.apache.kafka.connect.json.JsonConverter",
-      "key.converter.schemas.enable": "true",
-      "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-      "value.converter.schemas.enable": "true",
-      "transforms": "reroute",
-      "transforms.reroute.type": "io.debezium.transforms.ByLogicalTableRouter",
-      "transforms.reroute.topic.regex": "(.*)[.](.*)[.](.*)",
-      "transforms.reroute.topic.replacement": "idpdb.primary.$3"
+        "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+        "tasks.max": "1",
+        "connection.url": "jdbc:postgresql://tdled-mprb00104.enablers.sbrf.ru:5433/idpdb",
+        "connection.user": "idpapp",
+        "connection.password": "${file:/vault/secrets/connect-secret.properties:DATABASE_PASSWORD}",
+        "topics": "idpdb.primary.users",
+        "table.name.format": "${topic}",
+        "dialect.name": "PostgreSqlDatabaseDialect",
+        "pk.fields": "sber_profile_id",
+        "pk.mode": "record_key",
+        "insert.mode": "upsert",
+        "delete.enabled": "true",
+        "max.retries": 3,
+        "retry.backoff.ms": 1000,
+        "key.converter":"org.apache.kafka.connect.json.JsonConverter",
+        "value.converter":"org.apache.kafka.connect.json.JsonConverter",
+        "auto.create": "false",
+        "auto.evolve": "false",
+        "transforms": "route,unwrap",
+        "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
+        "transforms.route.regex": "([^.]+).([^.]+)",
+        "transforms.route.replacement": "idp.$2",
+        "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+        "transforms.unwrap.drop.tombstones": "false"
     }
 
 secman:

@@ -10,7 +10,7 @@ deployment:
 
 settings:
   env:
-    CUSTOM_SCRIPT_PATH: "/connectors/create-connectors.sh"
+    RUN_ADD_CONNECTORS_SCRIPT: true
   kafkaConnectDistributedProperties: |
     bootstrap.servers=tdleq-mprb00007.enablers.sbrf.ru:9093
     group.id=sberid.replication.source.primary
