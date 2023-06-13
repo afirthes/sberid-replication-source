@@ -11,8 +11,8 @@ RUN echo "Europe/Moscow" > /etc/timezone \
 ADD docker/create-connectors.sh /connectors/
 RUN chmod +x /connectors/create-connectors.sh
 
-ADD docker/confluentinc-kafka-connect-jdbc-10.7.0.tar.gz /usr/share/java/kafka/
 ADD docker/debezium-connector-postgres-1.8.1.Final-plugin.tar.gz /usr/share/java/kafka/
+ADD docker/debezium-scripting-1.5.2.Final.tar.gz /usr/share/java/kafka/
 USER 1001
 
 ENTRYPOINT ["connect-distributed", "/etc/kafka/connect-distributed.properties"]

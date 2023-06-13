@@ -58,7 +58,7 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
 
-  sberid-replication-source:
+  sberid-replication-source-primary:
     image: kafka-connect-source
     restart: unless-stopped
     depends_on:
@@ -67,10 +67,10 @@ services:
     ports:
       - "28083:8083"
     volumes:
-      - ./connect-distributed-source.properties:/etc/kafka/connect-distributed.properties
+      - ./replication-primary/connect-distributed-source-primary.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
 
-  sberid-replication-sink:
+  sberid-replication-sink-primary:
     image: kafka-connect-sink
     restart: unless-stopped
     depends_on:
@@ -79,7 +79,31 @@ services:
     ports:
       - "28084:8083"
     volumes:
-      - ./connect-distributed-sink.properties:/etc/kafka/connect-distributed.properties
+      - ./replication-primary/connect-distributed-sink-primary.properties:/etc/kafka/connect-distributed.properties
+      - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
+
+  sberid-replication-source-standin:
+    image: kafka-connect-source
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+      - kafka
+    ports:
+      - "28085:8083"
+    volumes:
+      - ./replication-standin/connect-distributed-source-standin.properties:/etc/kafka/connect-distributed.properties
+      - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
+
+  sberid-replication-sink-standin:
+    image: kafka-connect-sink
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+      - kafka
+    ports:
+      - "28086:8083"
+    volumes:
+      - ./replication-standin/connect-distributed-sink-standin.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
 
   akhq:
@@ -92,25 +116,43 @@ services:
               properties:
                 bootstrap.servers: "kafka:9092"
               connect:
-                - name: "sberid-replication-source"
-                  url: "http://sberid-replication-source:8083"
-                - name: "sberid-replication-sink"
-                  url: "http://sberid-replication-sink:8083"
+                - name: "sberid-replication-source-primary"
+                  url: "http://sberid-replication-source-primary:8083"
+                - name: "sberid-replication-sink-primary"
+                  url: "http://sberid-replication-sink-primary:8083"
+                - name: "sberid-replication-source-standin"
+                  url: "http://sberid-replication-source-standin:8083"
+                - name: "sberid-replication-sink-standin"
+                  url: "http://sberid-replication-sink-standin:8083"
     ports:
       - "28080:8080"
     links:
       - kafka
 
-  postgres:
+  idpdb_primary:
     image: debezium/postgres:13
     volumes:
-      - ./postgres-data-source:/var/lib/postgresql/data
-      - ./scripts/customers.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres-data-primary:/var/lib/postgresql/data
+      - ./scripts/primary.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
-      - POSTGRES_USER=idp
+      - POSTGRES_USER=idpapp
       - POSTGRES_PASSWORD=idp
-      - POSTGRES_DB=idp
+      - POSTGRES_DB=idpdb
       - PGPASSWORD=idp
       - PGDATA=/var/lib/postgresql/data
     ports:
       - 5432:5432
+
+  idpdb_standin:
+    image: debezium/postgres:13
+    volumes:
+      - ./postgres-data-standin:/var/lib/postgresql/data
+      - ./scripts/standin.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - POSTGRES_USER=idpapp
+      - POSTGRES_PASSWORD=idp
+      - POSTGRES_DB=idpdb
+      - PGPASSWORD=idp
+      - PGDATA=/var/lib/postgresql/data
+    ports:
+      - 5433:5432
