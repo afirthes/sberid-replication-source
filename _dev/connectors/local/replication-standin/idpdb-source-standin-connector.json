@@ -13,7 +13,7 @@
   "slot.name": "debezium",
   "snapshot.mode": "never",
   "decimal.handling.mode": "precise",
-  "tombstones.on.delete": false,
+  "tombstones.on.delete": true,
   "time.precision.mode": "connect",
   "publication.autocreate.mode": "filtered",
   "snapshot.lock.timeout.ms": 10000,
