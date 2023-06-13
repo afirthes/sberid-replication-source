@@ -25,14 +25,18 @@
   "key.converter.schemas.enable": "true",
   "value.converter": "org.apache.kafka.connect.json.JsonConverter",
   "value.converter.schemas.enable": "true",
-
-  "transforms": "removeSchema",
+  "transforms": "removeSchema,filterByChangeSource",
   "transforms.removeSchema.type": "io.debezium.transforms.ByLogicalTableRouter",
   "transforms.removeSchema.topic.regex": "(.*)[.](.*)[.](.*)",
   "transforms.removeSchema.topic.replacement": "$1.standin.$3",
-
+  "transforms.filterByChangeSource.type": "io.debezium.transforms.Filter",
+  "transforms.filterByChangeSource.language": "jsr223.groovy",
+  "transforms.filterByChangeSource.condition": "value.op == 'd' || value.op == 'r' || (value.op == 'i' || value.op == 'u') && value.after.change_source == 'STANDIN'",
+  "transforms.filterByChangeSource.predicate": "isTableTopic",
+  "predicates": "isTableTopic",
+  "predicates.isTableTopic.type": "org.apache.kafka.connect.transforms.predicates.TopicNameMatches",
+  "predicates.isTableTopic.pattern": "(?!.*transaction)(idpdb.standin..+)",
   "provide.transaction.metadata": "true",
   "transaction.topic": "idpdb.standin.transaction",
-
   "topic.prefix": "idpdb"
 }
