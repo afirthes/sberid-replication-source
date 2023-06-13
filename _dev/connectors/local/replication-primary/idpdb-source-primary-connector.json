@@ -31,7 +31,7 @@
   "transforms.removeSchema.topic.replacement": "$1.primary.$3",
   "transforms.filterByChangeSource.type": "io.debezium.transforms.Filter",
   "transforms.filterByChangeSource.language": "jsr223.groovy",
-  "transforms.filterByChangeSource.condition": "value.op == 'd' || value.op == 'r' || (value.op == 'i' || value.op == 'u') && value.after.change_source == 'PRIMARY'",
+  "transforms.filterByChangeSource.condition": "value.op == 'd' || value.op == 'r' || (value.op == 'c' || value.op == 'u') && value.after.change_source == 'PRIMARY'",
   "transforms.filterByChangeSource.predicate": "isTableTopic",
   "predicates": "isTableTopic",
   "predicates.isTableTopic.type": "org.apache.kafka.connect.transforms.predicates.TopicNameMatches",
