@@ -4,3 +4,5 @@ _dev/tmp/
 
 /_dev/connectors/local/postgres-data-sink/
 /_dev/connectors/local/postgres-data-source/
+/_dev/connectors/local/postgres-data-primary/
+/_dev/connectors/local/postgres-data-standin/
