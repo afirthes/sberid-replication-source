@@ -66,9 +66,12 @@ services:
       - kafka
     ports:
       - "28083:8083"
+    environment:
+      KAFKA_LOG_DIRS: "/tmp"
     volumes:
       - ./replication-primary/connect-distributed-source-primary.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
+      - ./replication-primary/idpdb-source-primary-connector.json:/connectors/idpdb-source-primary-connector.json
 
   sberid-replication-sink-primary:
     image: kafka-connect-sink
@@ -81,6 +84,7 @@ services:
     volumes:
       - ./replication-primary/connect-distributed-sink-primary.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
+      - ./replication-primary/idpdb-customers-sink-primary-connector.json:/connectors/idpdb-customers-sink-primary-connector.json
 
   sberid-replication-source-standin:
     image: kafka-connect-source
@@ -90,9 +94,12 @@ services:
       - kafka
     ports:
       - "28085:8083"
+    environment:
+      KAFKA_LOG_DIRS: "/tmp"
     volumes:
       - ./replication-standin/connect-distributed-source-standin.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
+      - ./replication-standin/idpdb-source-standin-connector.json:/connectors/idpdb-source-standin-connector.json
 
   sberid-replication-sink-standin:
     image: kafka-connect-sink
@@ -105,6 +112,7 @@ services:
     volumes:
       - ./replication-standin/connect-distributed-sink-standin.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
+      - ./replication-standin/idpdb-customers-sink-standin-connector.json:/connectors/idpdb-customers-sink-standin-connector.json
 
   akhq:
     image: tchiotludo/akhq

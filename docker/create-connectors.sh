@@ -1,6 +1,3 @@
-#!/bin/bash
-set -euo pipefail
-IFS=$'\n\t'
 
 echo "Waiting for Kafka Connect to start listening on kafka-connect  "
 while :; do

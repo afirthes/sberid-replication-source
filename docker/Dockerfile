@@ -8,11 +8,18 @@ RUN echo "Europe/Moscow" > /etc/timezone \
     && rpm -ivh /tmp/*.rpm \
     && rm -f /tmp/*.rpm
 
-ADD docker/create-connectors.sh /connectors/
+COPY docker/entry-point.sh /connectors/entry-point.sh
+RUN chmod +x /connectors/entry-point.sh
+
+COPY docker/create-connectors.sh /connectors/create-connectors.sh
 RUN chmod +x /connectors/create-connectors.sh
 
 ADD docker/debezium-connector-postgres-1.8.1.Final-plugin.tar.gz /usr/share/java/kafka/
 ADD docker/debezium-scripting-1.5.2.Final.tar.gz /usr/share/java/kafka/
+
+RUN chown 1001 /var/log/kafka/
+
 USER 1001
 
-ENTRYPOINT ["connect-distributed", "/etc/kafka/connect-distributed.properties"]
+WORKDIR "/connectors/"
+ENTRYPOINT ["sh", "/connectors/entry-point.sh"]
