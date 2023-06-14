@@ -64,6 +64,9 @@ services:
     depends_on:
       - zookeeper
       - kafka
+      - kafka2
+      - kafka3
+      - idpdb_primary
     ports:
       - "28083:8083"
     environment:
@@ -79,12 +82,18 @@ services:
     depends_on:
       - zookeeper
       - kafka
+      - kafka2
+      - kafka3
+      - idpdb_primary
     ports:
       - "28084:8083"
     volumes:
       - ./replication-primary/connect-distributed-sink-primary.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
       - ./replication-primary/idpdb-customers-sink-primary-connector.json:/connectors/idpdb-customers-sink-primary-connector.json
+      - ./replication-primary/idpdb-table-a-sink-primary-connector.json:/connectors/idpdb-table-a-sink-primary-connector.json
+      - ./replication-primary/idpdb-table-b-sink-primary-connector.json:/connectors/idpdb-table-b-sink-primary-connector.json
+      - ./replication-primary/idpdb-table-c-sink-primary-connector.json:/connectors/idpdb-table-c-sink-primary-connector.json
 
   sberid-replication-source-standin:
     image: kafka-connect-source
@@ -92,6 +101,9 @@ services:
     depends_on:
       - zookeeper
       - kafka
+      - kafka2
+      - kafka3
+      - idpdb_standin
     ports:
       - "28085:8083"
     environment:
@@ -107,12 +119,18 @@ services:
     depends_on:
       - zookeeper
       - kafka
+      - kafka2
+      - kafka3
+      - idpdb_standin
     ports:
       - "28086:8083"
     volumes:
       - ./replication-standin/connect-distributed-sink-standin.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
       - ./replication-standin/idpdb-customers-sink-standin-connector.json:/connectors/idpdb-customers-sink-standin-connector.json
+      - ./replication-standin/idpdb-table-a-sink-standin-connector.json:/connectors/idpdb-table-a-sink-standin-connector.json
+      - ./replication-standin/idpdb-table-b-sink-standin-connector.json:/connectors/idpdb-table-b-sink-standin-connector.json
+      - ./replication-standin/idpdb-table-c-sink-standin-connector.json:/connectors/idpdb-table-c-sink-standin-connector.json
 
   akhq:
     image: tchiotludo/akhq
@@ -142,6 +160,7 @@ services:
     volumes:
       - ./postgres-data-primary:/var/lib/postgresql/data
       - ./scripts/primary.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres/postgresql.conf:/var/lib/postgresql/data/postgresql.conf
     environment:
       - POSTGRES_USER=idpapp
       - POSTGRES_PASSWORD=idp
@@ -156,6 +175,7 @@ services:
     volumes:
       - ./postgres-data-standin:/var/lib/postgresql/data
       - ./scripts/standin.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres/postgresql.conf:/var/lib/postgresql/data/postgresql.conf
     environment:
       - POSTGRES_USER=idpapp
       - POSTGRES_PASSWORD=idp
