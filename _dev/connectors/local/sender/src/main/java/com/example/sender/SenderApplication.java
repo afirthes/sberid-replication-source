@@ -30,10 +30,10 @@ public class SenderApplication {
 
             ExecutorService ex = Executors.newFixedThreadPool(100);
 
-            for (int x = 0; x < 100; x++) {
+            for (int x = 0; x < 30; x++) {
                 ex.submit(() -> {
 
-                    for (int z = 0; z < 3; z++) {
+                    for (int z = 0; z < 30; z++) {
 
                         Random rand = new Random();
                         String correlation = UUID.randomUUID().toString().substring(0, 10);

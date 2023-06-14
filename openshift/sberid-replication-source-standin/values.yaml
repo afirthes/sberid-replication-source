@@ -52,7 +52,7 @@ settings:
         "pk.mode": "record_key",
         "insert.mode": "upsert",
         "delete.enabled": "true",
-        "max.retries": 3,
+        "max.retries": 30,
         "retry.backoff.ms": 1000,
         "key.converter":"org.apache.kafka.connect.json.JsonConverter",
         "value.converter":"org.apache.kafka.connect.json.JsonConverter",

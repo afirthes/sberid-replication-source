@@ -160,7 +160,6 @@ services:
     volumes:
       - ./postgres-data-primary:/var/lib/postgresql/data
       - ./scripts/primary.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./postgres/postgresql.conf:/var/lib/postgresql/data/postgresql.conf
     environment:
       - POSTGRES_USER=idpapp
       - POSTGRES_PASSWORD=idp
@@ -175,7 +174,6 @@ services:
     volumes:
       - ./postgres-data-standin:/var/lib/postgresql/data
       - ./scripts/standin.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./postgres/postgresql.conf:/var/lib/postgresql/data/postgresql.conf
     environment:
       - POSTGRES_USER=idpapp
       - POSTGRES_PASSWORD=idp

@@ -12,8 +12,8 @@ public class SpringJdbcConfig {
     public DataSource mysqlDataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("org.postgresql.Driver");
-        dataSource.setUrl("jdbc:postgresql://localhost:5432/idp");
-        dataSource.setUsername("idp");
+        dataSource.setUrl("jdbc:postgresql://localhost:5432/idpdb");
+        dataSource.setUsername("idpapp");
         dataSource.setPassword("idp");
 
         return dataSource;
