@@ -100,11 +100,13 @@ spec:
             - name: kafka-connect-config
               mountPath: /etc/kafka/connect-distributed.properties
               subPath: connect-distributed.properties
-            - name: debezium-source-connector
-              mountPath: /connectors/debezium-source-connector.json
-              subPath: debezium-source-connector.json
             - name: tmp
               mountPath: /tmp
+{{- range $key, $value := .Values.settings.connectors }}
+            - name: {{ $key }}
+              mountPath: /connectors/{{ $key }}.json
+              subPath: {{ $key }}.json
+{{- end }}
 {{- if not (eq ((.Values.settings).env).DISABLE_ADD_CONNECTORS_SCRIPT "true") }}
           command:
             - /bin/bash
@@ -132,10 +134,13 @@ spec:
             items:
               - key: create-connectors.sh
                 path: create-connectors.sh
-        - name: debezium-source-connector
+  {{- $releaseName := .Release.Name }}
+  {{- range $key, $value := .Values.settings.connectors }}
+        - name: {{ $key }}
           configMap:
-            name: {{ .Release.Name }}-files
+            name: {{ $releaseName }}-files
             defaultMode: 256
             items:
-              - key: debezium-source-connector.json
-                path: debezium-source-connector.json
+              - key: {{ $key }}.json
+                path: {{ $key }}.json
+  {{- end }}

@@ -68,6 +68,50 @@ settings:
         "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
         "transforms.unwrap.drop.tombstones": "false"
     }
+  connectors:
+    idpdb-source-primary-connector: |
+        {
+          "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+          "tasks.max": "1",
+          "database.hostname": "host.docker.internal",
+          "database.port": "5432",
+          "database.user": "idpapp",
+          "database.password": "idp",
+          "database.server.name": "idpdb",
+          "database.dbname": "idpdb",
+          "table.include.list": "public.customers,public.table_a,public.table_b,public.table_c",
+          "publication.name": "debezium_publication",
+          "plugin.name": "pgoutput",
+          "slot.name": "debezium",
+          "snapshot.mode": "initial",
+          "decimal.handling.mode": "precise",
+          "tombstones.on.delete": true,
+          "time.precision.mode": "connect",
+          "publication.autocreate.mode": "filtered",
+          "snapshot.lock.timeout.ms": 10000,
+          "max.queue.size": 20240,
+          "max.batch.size": 10240,
+          "poll.interval.ms": 1000,
+          "snapshot.fetch.size": 10240,
+          "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+          "key.converter.schemas.enable": "true",
+          "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+          "value.converter.schemas.enable": "true",
+          "transforms": "removeSchema,filterByChangeSource",
+          "transforms.removeSchema.type": "io.debezium.transforms.ByLogicalTableRouter",
+          "transforms.removeSchema.topic.regex": "(.*)[.](.*)[.](.*)",
+          "transforms.removeSchema.topic.replacement": "$1.primary.$3",
+          "transforms.filterByChangeSource.type": "io.debezium.transforms.Filter",
+          "transforms.filterByChangeSource.language": "jsr223.groovy",
+          "transforms.filterByChangeSource.condition": "value.op == 'd' || value.op == 'r' || (value.op == 'c' || value.op == 'u') && value.after.change_source == 'PRIMARY'",
+          "transforms.filterByChangeSource.predicate": "isTableTopic",
+          "predicates": "isTableTopic",
+          "predicates.isTableTopic.type": "org.apache.kafka.connect.transforms.predicates.TopicNameMatches",
+          "predicates.isTableTopic.pattern": "(?!.*transaction)(idpdb.primary..+)",
+          "provide.transaction.metadata": "true",
+          "transaction.topic": "idpdb.primary.transaction",
+          "topic.prefix": "idpdb"
+        }
 
 secman:
   namespace: CI02440297_CI02516656
