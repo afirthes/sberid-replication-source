@@ -102,19 +102,12 @@ spec:
               subPath: connect-distributed.properties
             - name: tmp
               mountPath: /tmp
+{{- if not (eq ((.Values.settings).env).DISABLE_ADD_CONNECTORS_SCRIPT "true") }}
 {{- range $key, $value := .Values.settings.connectors }}
             - name: {{ $key }}
               mountPath: /connectors/{{ $key }}.json
               subPath: {{ $key }}.json
 {{- end }}
-{{- if not (eq ((.Values.settings).env).DISABLE_ADD_CONNECTORS_SCRIPT "true") }}
-          command:
-            - /bin/bash
-            - -c
-            - |
-              /etc/confluent/docker/run &
-              /connectors/create-connectors.sh
-              sleep infinity
 {{- end }}
       volumes:
         -
@@ -134,8 +127,9 @@ spec:
             items:
               - key: create-connectors.sh
                 path: create-connectors.sh
-  {{- $releaseName := .Release.Name }}
-  {{- range $key, $value := .Values.settings.connectors }}
+{{- if not (eq ((.Values.settings).env).DISABLE_ADD_CONNECTORS_SCRIPT "true") }}
+{{- $releaseName := .Release.Name }}
+{{- range $key, $value := .Values.settings.connectors }}
         - name: {{ $key }}
           configMap:
             name: {{ $releaseName }}-files
@@ -143,4 +137,5 @@ spec:
             items:
               - key: {{ $key }}.json
                 path: {{ $key }}.json
-  {{- end }}
+{{- end }}
+{{- end }}
