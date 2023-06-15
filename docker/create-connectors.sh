@@ -16,7 +16,7 @@ printf "deploy connectors"
 for filename in *.json; do
   [ -e "$filename" ] || continue
 
-  printf "\ndeploy connector from file %s\n" "$filename"
+  printf "\n deploy connector from file %s\n" "$filename"
   connector_name="${filename/.json/}"
   curl -X PUT \
     -H 'Content-Type: application/json' \
