@@ -52,9 +52,7 @@ CREATE OR REPLACE FUNCTION create_change_source_triggers(schema_name text)
 DECLARE
     tbl_name text;
 BEGIN
-    FOR tbl_name IN SELECT table_name FROM information_schema.tables WHERE table_schema = schema_name
-                                                                       AND table_name <> 'databasechangelog'
-                                                                       AND table_name <> 'databasechangeloglock'
+    FOR tbl_name IN SELECT table_name FROM information_schema.tables WHERE table_schema = schema_name AND table_name <> 'databasechangelog' AND table_name <> 'databasechangeloglock'
         LOOP
             EXECUTE format('ALTER TABLE %I.%I ADD COLUMN IF NOT EXISTS change_source TEXT default ''PRIMARY'';', schema_name, tbl_name);
             EXECUTE format('DROP TRIGGER IF EXISTS trigger_change_source_%s on %I.%I', tbl_name, schema_name, tbl_name);
