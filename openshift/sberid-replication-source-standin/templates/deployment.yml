@@ -91,6 +91,8 @@ spec:
               valueFrom: { fieldRef: { apiVersion: v1, fieldPath: metadata.name } }
             - name:      CONTAINER_NAME
               value:     {{ .Release.Name }}
+            - name:      KAFKA_HEAP_OPTS
+              value:     {{ ((.Values.settings).env).KAFKA_HEAP_OPTS | squote }}
 {{- if .Values.settings.env }}
           envFrom:
             - configMapRef:

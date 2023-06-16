@@ -11,6 +11,7 @@ deployment:
 settings:
   env:
     DISABLE_ADD_CONNECTORS_SCRIPT: "false"
+    KAFKA_HEAP_OPTS: "-Xms1G -Xmx1G"
   kafkaConnectDistributedProperties: |
     bootstrap.servers=tdleq-mprb00007.enablers.sbrf.ru:9093
     group.id=sberid.replication.source.primary

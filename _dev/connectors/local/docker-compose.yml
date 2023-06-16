@@ -70,7 +70,7 @@ services:
     ports:
       - "28083:8083"
     environment:
-      KAFKA_LOG_DIRS: "/tmp"
+      KAFKA_HEAP_OPTS: "-Xms1G -Xmx1G"
     volumes:
       - ./replication-primary/connect-distributed-source-primary.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
@@ -87,6 +87,8 @@ services:
       - idpdb_primary
     ports:
       - "28084:8083"
+    environment:
+      KAFKA_HEAP_OPTS: "-Xms1G -Xmx1G"
     volumes:
       - ./replication-primary/connect-distributed-sink-primary.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
@@ -107,7 +109,7 @@ services:
     ports:
       - "28085:8083"
     environment:
-      KAFKA_LOG_DIRS: "/tmp"
+      KAFKA_HEAP_OPTS: "-Xms1G -Xmx1G"
     volumes:
       - ./replication-standin/connect-distributed-source-standin.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
@@ -124,6 +126,8 @@ services:
       - idpdb_standin
     ports:
       - "28086:8083"
+    environment:
+      KAFKA_HEAP_OPTS: "-Xms1G -Xmx1G"
     volumes:
       - ./replication-standin/connect-distributed-sink-standin.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties

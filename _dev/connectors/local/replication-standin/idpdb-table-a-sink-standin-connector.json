@@ -20,7 +20,7 @@
   "transforms": "route,unwrap",
   "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
   "transforms.route.regex": "(.*)[.](.*)[.](.*)",
-  "transforms.route.replacement": "public.$2",
+  "transforms.route.replacement": "public.$3",
   "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
   "transforms.unwrap.drop.tombstones": "false"
 }
