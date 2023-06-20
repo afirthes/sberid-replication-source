@@ -3,14 +3,51 @@ apiVersion: v1
 metadata:
   name: {{ .Release.Name }}-files
   labels:
-    {{- include "default.labels" . | indent 4 }}
+{{- include "default.labels" . | indent 4 }}
   annotations:
     deploymentTime: {{ now | date "02.01.2006 15:04:05" }}
 data:
   connect-distributed.properties: |-
 {{ tpl ( .Files.Get "files/kafka-connect/connect-distributed.properties" ) . | indent 4 }}
 
-{{- range $key, $value := .Values.settings.connectors }}
-{{ $key | indent 2}}: |-
-{{ $value | indent 4}}
+{{- $sourceConfig := .Values.settings.source }}
+{{- range $connector := .Values.settings.source.connectors }}
+{{ $connector.name | indent 2}}.json: |-
+    {
+      "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+      "tasks.max": "1",
+      "database.hostname": "{{ $sourceConfig.databaseHostname }}",
+      "database.port": "{{ $sourceConfig.databasePort }}",
+      "database.user": "{{ $sourceConfig.databaseUser }}",
+      "database.password": "${file:/vault/secrets/connect-secret.properties:DATABASE_PASSWORD}",
+      "database.server.name": "{{ $sourceConfig.databaseServerName }}",
+      "database.dbname": "{{ $sourceConfig.databaseDBname }}",
+      "table.include.list": "{{ $connector.tableIncludeList }}",
+      "publication.name": "debezium_publication",
+      "plugin.name": "pgoutput",
+      "slot.name": "debezium",
+      "snapshot.mode": "{{ $connector.snapshotMode }}",
+      "decimal.handling.mode": "precise",
+      "tombstones.on.delete": true,
+      "time.precision.mode": "connect",
+      "publication.autocreate.mode": "filtered",
+      "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+      "key.converter.schemas.enable": "true",
+      "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+      "value.converter.schemas.enable": "true",
+      "transforms": "removeSchema,filterByChangeSource",
+      "transforms.removeSchema.type": "io.debezium.transforms.ByLogicalTableRouter",
+      "transforms.removeSchema.topic.regex": "(.*)[.](.*)[.](.*)",
+      "transforms.removeSchema.topic.replacement": "{{ $sourceConfig.transformsReplacement }}",
+      "transforms.filterByChangeSource.type": "io.debezium.transforms.Filter",
+      "transforms.filterByChangeSource.language": "jsr223.groovy",
+      "transforms.filterByChangeSource.condition": "value.op == 'd' || value.op == 'r' || (value.op == 'c' || value.op == 'u') && value.after.change_source == 'PRIMARY'",
+      "transforms.filterByChangeSource.predicate": "isTableTopic",
+      "predicates": "isTableTopic",
+      "predicates.isTableTopic.type": "org.apache.kafka.connect.transforms.predicates.TopicNameMatches",
+      "predicates.isTableTopic.pattern": "(?!.*transaction)(idpdb.primary..+)",
+      "provide.transaction.metadata": "true",
+      "transaction.topic": "{{ $connector.transactionTopic }}",
+      "topic.prefix": "idpdb"
+    }
 {{- end }}

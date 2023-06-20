@@ -105,10 +105,10 @@ spec:
             - name: tmp
               mountPath: /tmp
 {{- if not (eq ((.Values.settings).env).DISABLE_ADD_CONNECTORS_SCRIPT "true") }}
-{{- range $key, $value := .Values.settings.connectors }}
-            - name: {{ $key }}
-              mountPath: /connectors/{{ $key }}.json
-              subPath: {{ $key }}.json
+{{- range $connector := .Values.settings.source.connectors }}
+            - name: {{ $connector.name }}
+              mountPath: /connectors/{{ $connector.name }}.json
+              subPath: {{ $connector.name }}.json
 {{- end }}
 {{- end }}
       volumes:
@@ -130,13 +130,13 @@ spec:
                 path: create-connectors.sh
 {{- if not (eq ((.Values.settings).env).DISABLE_ADD_CONNECTORS_SCRIPT "true") }}
 {{- $releaseName := .Release.Name }}
-{{- range $key, $value := .Values.settings.connectors }}
-        - name: {{ $key }}
+{{- range $connector := .Values.settings.source.connectors }}
+        - name: {{ $connector.name }}
           configMap:
             name: {{ $releaseName }}-files
             defaultMode: 256
             items:
-              - key: {{ $key }}.json
-                path: {{ $key }}.json
+              - key: {{ $connector.name }}.json
+                path: {{ $connector.name }}.json
 {{- end }}
 {{- end }}

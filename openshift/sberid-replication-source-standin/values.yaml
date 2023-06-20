@@ -40,45 +40,18 @@ settings:
     ssl.keystore.location=/vault/secrets/keystore.jks
     ssl.keystore.password=${file:/vault/secrets/connect-secret.properties:SSL_KEYSTORE_PASSWORD}
 
-  connectors:
-    - idpdb-source-standin-connector: |
-        {
-          "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
-          "tasks.max": "1",
-          "database.hostname": "host.docker.internal",
-          "database.port": "5433",
-          "database.user": "idpapp",
-          "database.password": "idp",
-          "database.server.name": "idpdb",
-          "database.dbname": "idpdb",
-          "table.include.list": "public.customers,public.table_a,public.table_b,public.table_c",
-          "publication.name": "debezium_publication",
-          "plugin.name": "pgoutput",
-          "slot.name": "debezium",
-          "snapshot.mode": "never",
-          "decimal.handling.mode": "precise",
-          "tombstones.on.delete": true,
-          "time.precision.mode": "connect",
-          "publication.autocreate.mode": "filtered",
-          "key.converter": "org.apache.kafka.connect.json.JsonConverter",
-          "key.converter.schemas.enable": "true",
-          "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-          "value.converter.schemas.enable": "true",
-          "transforms": "removeSchema,filterByChangeSource",
-          "transforms.removeSchema.type": "io.debezium.transforms.ByLogicalTableRouter",
-          "transforms.removeSchema.topic.regex": "(.*)[.](.*)[.](.*)",
-          "transforms.removeSchema.topic.replacement": "$1.standin.$3",
-          "transforms.filterByChangeSource.type": "io.debezium.transforms.Filter",
-          "transforms.filterByChangeSource.language": "jsr223.groovy",
-          "transforms.filterByChangeSource.condition": "value.op == 'd' || value.op == 'r' || (value.op == 'c' || value.op == 'u') && value.after.change_source == 'STANDIN'",
-          "transforms.filterByChangeSource.predicate": "isTableTopic",
-          "predicates": "isTableTopic",
-          "predicates.isTableTopic.type": "org.apache.kafka.connect.transforms.predicates.TopicNameMatches",
-          "predicates.isTableTopic.pattern": "(?!.*transaction)(idpdb.standin..+)",
-          "provide.transaction.metadata": "true",
-          "transaction.topic": "idpdb.standin.transaction",
-          "topic.prefix": "idpdb"
-        }
+  source:
+    databaseHostname: 'host.docker.internal'
+    databasePort: '5433'
+    databaseUser: 'idpapp'
+    databaseDBname: 'idpdb'
+    databaseServerName: 'idpdb'
+    transformsReplacement: 'idpdb.primary.$3'
+    connectors:
+      - name: idpdb-source-standin-connector
+        tableIncludeList: 'public.customers,public.table_a,public.table_b,public.table_c'
+        snapshotMode: 'initial'
+        transactionTopic: 'idpdb.primary.transaction'
 
 secman:
   namespace: CI02440297_CI02516656
