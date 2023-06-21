@@ -93,9 +93,6 @@ services:
       - ./replication-primary/connect-distributed-sink-primary.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
       - ./replication-primary/idpdb-customers-sink-primary-connector.json:/connectors/idpdb-customers-sink-primary-connector.json
-      - ./replication-primary/idpdb-table-a-sink-primary-connector.json:/connectors/idpdb-table-a-sink-primary-connector.json
-      - ./replication-primary/idpdb-table-b-sink-primary-connector.json:/connectors/idpdb-table-b-sink-primary-connector.json
-      - ./replication-primary/idpdb-table-c-sink-primary-connector.json:/connectors/idpdb-table-c-sink-primary-connector.json
 
   sberid-replication-source-standin:
     image: kafka-connect-source
@@ -132,9 +129,6 @@ services:
       - ./replication-standin/connect-distributed-sink-standin.properties:/etc/kafka/connect-distributed.properties
       - ./secrets/connect-secret.properties:/vault/secrets/connect-secret.properties
       - ./replication-standin/idpdb-customers-sink-standin-connector.json:/connectors/idpdb-customers-sink-standin-connector.json
-      - ./replication-standin/idpdb-table-a-sink-standin-connector.json:/connectors/idpdb-table-a-sink-standin-connector.json
-      - ./replication-standin/idpdb-table-b-sink-standin-connector.json:/connectors/idpdb-table-b-sink-standin-connector.json
-      - ./replication-standin/idpdb-table-c-sink-standin-connector.json:/connectors/idpdb-table-c-sink-standin-connector.json
 
   akhq:
     image: tchiotludo/akhq

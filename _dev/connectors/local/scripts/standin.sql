@@ -44,33 +44,74 @@ ALTER TABLE table_c ADD CONSTRAINT fk_a_table FOREIGN KEY(a_id) REFERENCES table
 ALTER TABLE table_c ADD CONSTRAINT fk_b_table FOREIGN KEY(b_id) REFERENCES table_b(id);
 
 CREATE OR REPLACE FUNCTION update_change_source()
-    RETURNS TRIGGER AS $$
+    RETURNS TRIGGER AS
+$$
 BEGIN
-    IF NEW.change_source IS NULL THEN
+    -- Заполняем новое поле change_source значением STANDIN только если изменения из standin
+    IF NEW.change_source = 'DEBEZIUM' THEN
+        NEW.change_source = 'PRIMARY';
+    ELSE
         NEW.change_source = 'STANDIN';
     END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION create_change_source_triggers(schema_name text)
-    RETURNS VOID AS $$
+CREATE OR REPLACE FUNCTION create_change_source_and_reset_seqs_triggers()
+    RETURNS VOID AS
+$$
 DECLARE
-    tbl_name text;
+    tbl_name            text;
     sequence_curr_value bigint;
+    schema_name         text := "current_schema"();
+    id_seq_exists       bool;
 BEGIN
-    FOR tbl_name IN SELECT table_name FROM information_schema.tables WHERE table_schema = schema_name AND table_name <> 'databasechangelog' AND table_name <> 'databasechangeloglock'
+    -- Выбор таблиц, которым нужно проставить change_source - все таблицы из схемы, кроме таблиц liquibase
+    FOR tbl_name IN SELECT table_name
+                    FROM information_schema.tables
+                    WHERE table_schema = schema_name
+                      AND table_name <> 'databasechangelog'
+                      AND table_name <> 'databasechangeloglock'
         LOOP
+            -- Добавление колонки change_source со значением по умолчанию STANDIN
+            EXECUTE format('ALTER TABLE %s ADD COLUMN IF NOT EXISTS change_source TEXT default ''STANDIN'';', tbl_name);
 
-            EXECUTE 'SELECT last_value FROM ' || tbl_name || '_id_seq' INTO sequence_curr_value;
-            IF sequence_curr_value < 100000000000 THEN
-                EXECUTE format('ALTER SEQUENCE %I.%I_id_seq RESTART WITH 100000000000;', schema_name, tbl_name);
+            -- Пересоздание триггера на зополнение колонки change_source при инсерте или апдейте
+            EXECUTE format('DROP TRIGGER IF EXISTS trigger_change_source_%s on %s', tbl_name, tbl_name);
+            EXECUTE format(
+                    'CREATE TRIGGER trigger_change_source_%s BEFORE INSERT OR UPDATE ON %s FOR EACH ROW EXECUTE FUNCTION update_change_source()',
+                    tbl_name, tbl_name);
+
+            -- Проверка наличия id sequence у текущей таблицы
+            EXECUTE format('SELECT 0 FROM pg_class where relname = ''%s_id_seq''', tbl_name) INTO id_seq_exists;
+            IF id_seq_exists IS NOT NULL THEN
+                -- Проверка и сдвиг сиквенса
+                EXECUTE 'SELECT last_value FROM ' || tbl_name || '_id_seq;' INTO sequence_curr_value;
+                IF sequence_curr_value < 100000000000 THEN
+                    EXECUTE format('ALTER SEQUENCE %s_id_seq RESTART WITH 100000000000;', tbl_name);
+                END IF;
             END IF;
-            EXECUTE format('ALTER TABLE %I.%I ADD COLUMN IF NOT EXISTS change_source TEXT default ''STANDIN'';', schema_name, tbl_name);
-            EXECUTE format('DROP TRIGGER IF EXISTS trigger_change_source_%s on %I.%I', tbl_name, schema_name, tbl_name);
-            EXECUTE format('CREATE TRIGGER trigger_change_source_%s BEFORE INSERT OR UPDATE ON %I.%I FOR EACH ROW EXECUTE FUNCTION update_change_source()', tbl_name, schema_name, tbl_name);
         END LOOP;
 END
 $$ LANGUAGE plpgsql;
 
-SELECT create_change_source_triggers('public');
+SELECT create_change_source_and_reset_seqs_triggers();
+
+CREATE OR REPLACE FUNCTION update_hibernate_sequence()
+    RETURNS VOID AS
+$$
+DECLARE
+    sequence_curr_value bigint;
+BEGIN
+    -- Создание сиквенса для hibernate со сдвигом
+    EXECUTE 'CREATE SEQUENCE IF NOT EXISTS hibernate_sequence START 100000000000;';
+
+    -- Если сиквенс уже есть, то сдвигаем его при необходимости
+    EXECUTE 'SELECT last_value FROM hibernate_sequence' INTO sequence_curr_value;
+    IF sequence_curr_value < 100000000000 THEN
+        EXECUTE 'ALTER SEQUENCE hibernate_sequence RESTART WITH 100000000000;';
+    END IF;
+END
+$$ LANGUAGE plpgsql;
+
+SELECT update_hibernate_sequence();

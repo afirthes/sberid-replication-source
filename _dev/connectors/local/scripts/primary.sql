@@ -38,27 +38,43 @@ ALTER TABLE table_c ADD CONSTRAINT fk_b_table FOREIGN KEY(b_id) REFERENCES table
 INSERT INTO customers (name) VALUES ('joe'), ('bob'), ('sue');
 
 CREATE OR REPLACE FUNCTION update_change_source()
-    RETURNS TRIGGER AS $$
+    RETURNS TRIGGER AS
+$$
 BEGIN
-    IF NEW.change_source IS NULL THEN
+    -- Заполняем новое поле change_source значением PRIMARY только в том случае, если оно пришло из primary
+    IF NEW.change_source = 'DEBEZIUM' THEN
+        NEW.change_source = 'STANDIN';
+    ELSE
         NEW.change_source = 'PRIMARY';
     END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION create_change_source_triggers(schema_name text)
-    RETURNS VOID AS $$
+CREATE OR REPLACE FUNCTION create_change_source_and_reset_seqs_triggers()
+    RETURNS VOID AS
+$$
 DECLARE
-    tbl_name text;
+    tbl_name    text;
+    schema_name text := "current_schema"();
 BEGIN
-    FOR tbl_name IN SELECT table_name FROM information_schema.tables WHERE table_schema = schema_name AND table_name <> 'databasechangelog' AND table_name <> 'databasechangeloglock'
+    -- Выбор таблиц, которым нужно проставить change_source - все таблицы из схемы, кроме таблиц liquibase
+    FOR tbl_name IN SELECT table_name
+                    FROM information_schema.tables
+                    WHERE table_schema = schema_name
+                      AND table_name <> 'databasechangelog'
+                      AND table_name <> 'databasechangeloglock'
         LOOP
-            EXECUTE format('ALTER TABLE %I.%I ADD COLUMN IF NOT EXISTS change_source TEXT default ''PRIMARY'';', schema_name, tbl_name);
-            EXECUTE format('DROP TRIGGER IF EXISTS trigger_change_source_%s on %I.%I', tbl_name, schema_name, tbl_name);
-            EXECUTE format('CREATE TRIGGER trigger_change_source_%s BEFORE INSERT OR UPDATE ON %I.%I FOR EACH ROW EXECUTE FUNCTION update_change_source()', tbl_name, schema_name, tbl_name);
+            -- Добавление колонки change_source со значением по умолчанию PRIMARY
+            EXECUTE format('ALTER TABLE %s ADD COLUMN IF NOT EXISTS change_source TEXT default ''PRIMARY'';', tbl_name);
+
+            -- Пересоздание триггера на зополнение колонки change_source при инсерте или апдейте
+            EXECUTE format('DROP TRIGGER IF EXISTS trigger_change_source_%s on %s', tbl_name, tbl_name);
+            EXECUTE format(
+                    'CREATE TRIGGER trigger_change_source_%s BEFORE INSERT OR UPDATE ON %s FOR EACH ROW EXECUTE FUNCTION update_change_source()',
+                    tbl_name, tbl_name);
         END LOOP;
 END
 $$ LANGUAGE plpgsql;
 
-SELECT create_change_source_triggers('public');
+SELECT create_change_source_and_reset_seqs_triggers();
